@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+type WebsiteAnalysis struct {
+	IsDark bool
+	HasPricing bool
+	HasTestimonials bool
+	HasGallery bool
+}
+
 func SearchInternet(query string) string {
 
 	searchURL :=
@@ -15,10 +22,10 @@ func SearchInternet(query string) string {
 			url.QueryEscape(query)
 
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout:10*time.Second,
 	}
 
-	req, _ := http.NewRequest(
+	req,_ := http.NewRequest(
 		"GET",
 		searchURL,
 		nil,
@@ -29,7 +36,7 @@ func SearchInternet(query string) string {
 		"Mozilla/5.0",
 	)
 
-	resp, err := client.Do(req)
+	resp,err := client.Do(req)
 
 	if err != nil {
 		return ""
@@ -37,25 +44,47 @@ func SearchInternet(query string) string {
 
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body,_ := io.ReadAll(resp.Body)
 
 	return string(body)
 }
 
-func ExtractUsefulContent(
+func AnalyzeWebsite(
 	html string,
-) string {
+) WebsiteAnalysis {
 
-	html = strings.ReplaceAll(
+	a := WebsiteAnalysis{}
+
+	html =
+		strings.ToLower(html)
+
+	if strings.Contains(
 		html,
-		"\n",
-		" ",
-	)
-
-	if len(html) > 5000 {
-
-		html = html[:5000]
+		"testimonial",
+	){
+		a.HasTestimonials = true
 	}
 
-	return html
+	if strings.Contains(
+		html,
+		"pricing",
+	){
+		a.HasPricing = true
+	}
+
+	if strings.Contains(
+		html,
+		"gallery",
+	){
+		a.HasGallery = true
+	}
+
+	if strings.Contains(
+		html,
+		"#000",
+	){
+		a.IsDark = true
+	}
+
+	return a
 }
