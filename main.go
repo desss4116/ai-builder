@@ -1,7 +1,10 @@
 package main
 
 import (
+	"ai-builder/database"
 	"ai-builder/engine"
+	"ai-builder/scheduler"
+
 	"encoding/json"
 	"fmt"
 	"log"
@@ -30,6 +33,22 @@ var (
 
 func main() {
 
+	/*
+		DATABASE
+	*/
+
+	database.InitDB()
+
+	/*
+		AUTO INTERNET LEARNING
+	*/
+
+	scheduler.StartLearning()
+
+	/*
+		DISCORD
+	*/
+
 	token := os.Getenv("DISCORD_TOKEN")
 
 	if token == "" {
@@ -55,13 +74,29 @@ func main() {
 		log.Fatal(err)
 	}
 
+	/*
+		SITES
+	*/
+
 	loadSites()
 
+	/*
+		ROUTES
+	*/
+
 	http.HandleFunc("/", homeHandler)
+
 	http.HandleFunc("/site/", siteHandler)
+
 	http.HandleFunc("/editor/", editorHandler)
+
 	http.HandleFunc("/api/generate", apiGenerateHandler)
+
 	http.HandleFunc("/api/react/", reactExportHandler)
+
+	/*
+		PORT
+	*/
 
 	port := os.Getenv("PORT")
 
@@ -70,12 +105,15 @@ func main() {
 	}
 
 	log.Println("===================================")
-	log.Println("AI Builder V2 ONLINE")
+	log.Println("AI Builder ONLINE")
 	log.Println("Discord Bot ONLINE")
-	log.Println("Server running on :", port)
+	log.Println("Internet Intelligence ACTIVE")
+	log.Println("SQLite Memory ACTIVE")
 	log.Println("===================================")
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(
+		http.ListenAndServe(":"+port, nil),
+	)
 }
 
 func messageHandler(
@@ -87,19 +125,34 @@ func messageHandler(
 		return
 	}
 
-	msg := strings.TrimSpace(m.Content)
+	msg := strings.TrimSpace(
+		m.Content,
+	)
+
+	/*
+		NORMAL AI-LIKE REPLIES
+	*/
 
 	if !isWebsiteRequest(msg) {
 
+		reply := generateAIReply(msg)
+
 		s.ChannelMessageSend(
 			m.ChannelID,
-			randomReply(),
+			reply,
 		)
 
 		return
 	}
 
-	go generateSiteForUser(s, m)
+	/*
+		WEBSITE GENERATION
+	*/
+
+	go generateSiteForUser(
+		s,
+		m,
+	)
 }
 
 func generateSiteForUser(
@@ -107,33 +160,47 @@ func generateSiteForUser(
 	m *discordgo.MessageCreate,
 ) {
 
-	s.ChannelTyping(m.ChannelID)
+	s.ChannelTyping(
+		m.ChannelID,
+	)
 
 	prompt := m.Content
 
-	ctx := engine.ParsePrompt(prompt)
-
 	/*
-		INTERNET ENHANCED GENERATION
+		PARSE PROMPT
 	*/
 
-	trends := engine.FetchWebsite(
-		"https://www.apple.com",
+	ctx := engine.ParsePrompt(
+		prompt,
 	)
 
-	_ = trends
-
 	/*
-		LAYOUT ENGINE
+		INTERNET SEARCH
 	*/
 
-	html := engine.GenerateWebsite(ctx)
+	internetData :=
+		engine.SearchInternet(prompt)
+
+	_ = internetData
+
+	/*
+		GENERATE WEBSITE
+	*/
+
+	html := engine.GenerateWebsite(
+		ctx,
+	)
 
 	/*
 		REACT EXPORT
 	*/
 
-	reactCode := generateReactExport(html)
+	reactCode :=
+		generateReactExport(html)
+
+	/*
+		SAVE
+	*/
 
 	site := Site{
 		ID:        randomID(),
@@ -145,6 +212,10 @@ func generateSiteForUser(
 	}
 
 	saveSite(site)
+
+	/*
+		URLS
+	*/
 
 	domain := os.Getenv("DOMAIN")
 
@@ -160,22 +231,30 @@ func generateSiteForUser(
 		site.ID,
 	)
 
+	/*
+		MESSAGE
+	*/
+
 	message := fmt.Sprintf(`
 ✅ Website Generated
 
-🌍 Live Website:
+🌍 Website:
 %s
 
-🎨 Visual Editor:
+🎨 Editor:
 %s
 
 ⚛ React Export Ready
-🚀 Premium UI Generated
-✨ Animations Enabled
+✨ Premium UI Enabled
+🚀 Internet Enhanced
 `,
 		url,
 		editorURL,
 	)
+
+	/*
+		DM USER
+	*/
 
 	dm, err := s.UserChannelCreate(
 		m.Author.ID,
@@ -202,46 +281,144 @@ func generateSiteForUser(
 	}
 }
 
-func isWebsiteRequest(msg string) bool {
+func generateAIReply(
+	msg string,
+) string {
+
+	msg = strings.ToLower(msg)
+
+	/*
+		INTERNET SEARCH
+	*/
+
+	internet :=
+		engine.SearchInternet(msg)
+
+	_ = internet
+
+	/*
+		SMART REPLIES
+	*/
+
+	if strings.Contains(msg, "привет") {
+
+		return `
+👋 Привет.
+
+Я AI Builder.
+
+Могу:
+• создавать сайты
+• анализировать интернет
+• генерировать UI
+• делать landing pages
+`
+	}
+
+	if strings.Contains(msg, "что умеешь") {
+
+		return `
+🚀 Возможности:
+
+• AI-like website generation
+• Internet-enhanced search
+• Premium UI
+• React export
+• Framer-like layouts
+• Dynamic generation
+`
+	}
+
+	if strings.Contains(msg, "как дела") {
+
+		return `
+⚡ Работаю нормально.
+
+Сейчас:
+• изучаю интернет
+• генерирую сайты
+• улучшаю layouts
+`
+	}
+
+	/*
+		SEARCH DATABASE
+	*/
+
+	results :=
+		database.SearchKnowledge(msg)
+
+	if len(results) > 0 {
+
+		return fmt.Sprintf(`
+🧠 Я нашёл информацию:
+
+%s
+
+%s
+`,
+			results[0].Title,
+			results[0].Content,
+		)
+	}
+
+	/*
+		FALLBACK
+	*/
+
+	return `
+🌐 Я обработал запрос через internet layer.
+
+Попробуй:
+• создай сайт для sneaker brand
+• сделай ecommerce landing
+• build portfolio website
+`
+}
+
+func isWebsiteRequest(
+	msg string,
+) bool {
 
 	msg = strings.ToLower(msg)
 
 	triggers := []string{
+
 		"создай сайт",
+
 		"сделай сайт",
+
 		"website",
+
 		"landing page",
+
 		"build website",
+
 		"create website",
-		"shop",
-		"store",
+
 		"portfolio",
+
+		"shop",
+
+		"store",
+
 		"лендинг",
+
+		"интернет магазин",
 	}
 
 	for _, t := range triggers {
 
-		if strings.Contains(msg, t) {
+		if strings.Contains(
+			msg,
+			t,
+		) {
+
 			return true
 		}
 	}
 
 	return false
-}
-
-func randomReply() string {
-
-	replies := []string{
-		"👋 Напиши: создай сайт для sneaker store",
-		"🚀 Я умею создавать premium websites",
-		"🎨 Попробуй: build website for coffee shop",
-		"⚡ Я генерирую Framer-like сайты",
-		"🔥 Могу сделать ecommerce landing",
-	}
-
-	return replies[
-		time.Now().UnixNano()%int64(len(replies))
-	]
 }
 
 func homeHandler(
@@ -263,13 +440,19 @@ func homeHandler(
 body{
 margin:0;
 font-family:Arial;
-background:#020617;
+background:
+linear-gradient(
+135deg,
+#020617,
+#0f172a
+);
 color:white;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
 flex-direction:column;
+overflow:hidden;
 }
 
 h1{
@@ -291,7 +474,7 @@ font-size:22px;
 <h1>AI Builder</h1>
 
 <p>
-Discord AI Website Generator
+Internet Powered Website Intelligence
 </p>
 
 </body>
@@ -330,7 +513,10 @@ func siteHandler(
 		"text/html",
 	)
 
-	fmt.Fprint(w, site.HTML)
+	fmt.Fprint(
+		w,
+		site.HTML,
+	)
 }
 
 func editorHandler(
@@ -363,14 +549,14 @@ func editorHandler(
 
 <head>
 
-<title>Visual Editor</title>
+<title>AI Editor</title>
 
 <style>
 
 body{
 margin:0;
 font-family:Arial;
-background:#0f172a;
+background:#020617;
 color:white;
 display:flex;
 height:100vh;
@@ -378,7 +564,7 @@ overflow:hidden;
 }
 
 .sidebar{
-width:300px;
+width:320px;
 background:#111827;
 padding:20px;
 overflow:auto;
@@ -396,16 +582,20 @@ border:none;
 }
 
 .button{
-display:block;
 width:100%%;
 padding:16px;
 margin-bottom:16px;
 border:none;
+border-radius:16px;
 background:#3b82f6;
 color:white;
-border-radius:12px;
 cursor:pointer;
 font-size:16px;
+transition:.3s;
+}
+
+.button:hover{
+transform:translateY(-3px);
 }
 
 .input{
@@ -413,7 +603,7 @@ width:100%%;
 padding:14px;
 margin-bottom:16px;
 border:none;
-border-radius:12px;
+border-radius:14px;
 }
 
 </style>
@@ -426,7 +616,10 @@ border-radius:12px;
 
 <h2>AI Builder Editor</h2>
 
-<input class="input" placeholder="Edit title">
+<input
+class="input"
+placeholder="Edit title"
+>
 
 <button class="button">
 Change Layout
@@ -459,7 +652,10 @@ Publish
 		site.ID,
 	)
 
-	fmt.Fprint(w, editor)
+	fmt.Fprint(
+		w,
+		editor,
+	)
 }
 
 func apiGenerateHandler(
@@ -467,18 +663,22 @@ func apiGenerateHandler(
 	r *http.Request,
 ) {
 
-	prompt := r.URL.Query().Get(
-		"prompt",
-	)
+	prompt :=
+		r.URL.Query().Get(
+			"prompt",
+		)
 
 	if prompt == "" {
 
-		prompt = "modern startup website"
+		prompt =
+			"modern startup website"
 	}
 
-	ctx := engine.ParsePrompt(prompt)
+	ctx :=
+		engine.ParsePrompt(prompt)
 
-	html := engine.GenerateWebsite(ctx)
+	html :=
+		engine.GenerateWebsite(ctx)
 
 	site := Site{
 		ID:      randomID(),
@@ -523,7 +723,10 @@ func reactExportHandler(
 
 	if !ok {
 
-		http.NotFound(w, r)
+		http.NotFound(
+			w,
+			r,
+		)
 
 		return
 	}
@@ -533,7 +736,10 @@ func reactExportHandler(
 		"text/plain",
 	)
 
-	fmt.Fprint(w, site.ReactCode)
+	fmt.Fprint(
+		w,
+		site.ReactCode,
+	)
 }
 
 func generateReactExport(
@@ -567,7 +773,9 @@ func randomID() string {
 	)
 }
 
-func saveSite(site Site) {
+func saveSite(
+	site Site,
+) {
 
 	mutex.Lock()
 
@@ -590,9 +798,10 @@ func saveSite(site Site) {
 
 func loadSites() {
 
-	data, err := os.ReadFile(
-		"sites.json",
-	)
+	data, err :=
+		os.ReadFile(
+			"sites.json",
+		)
 
 	if err != nil {
 		return
