@@ -1,1 +1,10 @@
-sites.json
+# Binaries
+main
+ai-builder
+
+# Database
+*.db
+*.db-journal
+
+# OS files
+.DS_Store
