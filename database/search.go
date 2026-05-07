@@ -1,43 +1,24 @@
 package database
 
-type SearchResult struct {
-	Title   string
+import "fmt"
+
+type KnowledgeResult struct {
 	Content string
+	Source  string
 }
 
-func SearchKnowledge(
-	query string,
-) []SearchResult {
-
-	rows, err := DB.Query(`
-	SELECT
-	title,
-	content
-	FROM knowledge_base
-	WHERE knowledge_base MATCH ?
-	ORDER BY bm25(knowledge_base)
-	LIMIT 5
-	`, query)
-
+func GetKnowledge(tag string) []KnowledgeResult {
+	rows, err := DB.Query("SELECT content, source FROM knowledge WHERE tag LIKE ?", "%"+tag+"%")
 	if err != nil {
 		return nil
 	}
-
 	defer rows.Close()
 
-	results := []SearchResult{}
-
+	var results []KnowledgeResult
 	for rows.Next() {
-
-		var r SearchResult
-
-		rows.Scan(
-			&r.Title,
-			&r.Content,
-		)
-
+		var r KnowledgeResult
+		rows.Scan(&r.Content, &r.Source)
 		results = append(results, r)
 	}
-
 	return results
 }
