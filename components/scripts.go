@@ -1,81 +1,22 @@
-package components
-
-func Scripts() string {
-
+func RenderScripts() string {
 	return `
-<script>
+	<script src="https://unpkg.com"></script>
+	<script src="https://jsdelivr.net"></script>
+	<script>
+		// Анимации
+		AOS.init({ duration: 800, once: false, mirror: true });
+		
+		// Плавный скролл
+		const lenis = new Lenis();
+		function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+		requestAnimationFrame(raf);
 
-const menuBtn =
-document.getElementById(
-'menuBtn'
-)
-
-const navLinks =
-document.getElementById(
-'navLinks'
-)
-
-menuBtn.onclick = () => {
-
-navLinks.classList.toggle(
-'active'
-)
-
-}
-
-const observer =
-new IntersectionObserver(
-entries => {
-
-entries.forEach(entry => {
-
-if(entry.isIntersecting){
-
-entry.target.classList.add(
-'show'
-)
-
-}
-
-})
-
-}
-)
-
-document
-.querySelectorAll('.fade-up')
-.forEach(el => {
-
-observer.observe(el)
-
-})
-
-document
-.querySelectorAll('button')
-.forEach(btn => {
-
-btn.addEventListener(
-'mouseenter',
-() => {
-
-btn.style.transform =
-'scale(1.05)'
-
-}
-)
-
-btn.addEventListener(
-'mouseleave',
-() => {
-
-btn.style.transform =
-'scale(1)'
-
-}
-)
-
-})
-
-</script>
-`
+		// Логика кнопок
+		document.querySelectorAll('button').forEach(btn => {
+			btn.addEventListener('click', () => {
+				btn.style.transform = 'scale(0.95)';
+				setTimeout(() => btn.style.transform = 'scale(1)', 100);
+			});
+		});
+	</script>`
 }
