@@ -1,21 +1,13 @@
 package database
 
-func AddKnowledge(
-	category string,
-	title string,
-	content string,
-) {
+func SavePattern(tag string, content string, source string) {
+	stmt, _ := DB.Prepare("INSERT INTO knowledge (tag, content, source) VALUES (?, ?, ?)")
+	defer stmt.Close()
+	stmt.Exec(tag, content, source)
+}
 
-	DB.Exec(`
-	INSERT INTO knowledge_base(
-	category,
-	title,
-	content
-	)
-	VALUES(?,?,?)
-	`,
-		category,
-		title,
-		content,
-	)
+func SaveGeneratedSite(id, prompt, html string) {
+	stmt, _ := DB.Prepare("INSERT INTO sites (id, prompt, html) VALUES (?, ?, ?)")
+	defer stmt.Close()
+	stmt.Exec(id, prompt, html)
 }
