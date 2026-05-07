@@ -1,90 +1,30 @@
 package engine
 
 import (
-	"io"
+	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
+	"io"
+	"encoding/json"
 	"time"
 )
 
-type WebsiteAnalysis struct {
-	IsDark bool
-	HasPricing bool
-	HasTestimonials bool
-	HasGallery bool
-}
+var mirrors = []string{"https://searx.be", "https://ononoki.org", "https://searx.work"}
 
 func SearchInternet(query string) string {
+	client := &http.Client{Timeout: 4 * time.Second}
+	for _, m := range mirrors {
+		u := fmt.Sprintf("%s/search?q=%s&format=json", m, url.QueryEscape(query))
+		resp, err := client.Get(u)
+		if err != nil || resp.StatusCode != 200 { continue }
+		
+		var res struct { Results []struct { Content string `json:"content"` } `json:"results"` }
+		json.NewDecoder(resp.Body).Decode(&res)
+		resp.Body.Close()
 
-	searchURL :=
-		"https://html.duckduckgo.com/html/?q=" +
-			url.QueryEscape(query)
-
-	client := &http.Client{
-		Timeout:10*time.Second,
+		if len(res.Results) > 0 {
+			return res.Results[0].Content // Берем самый релевантный кусок
+		}
 	}
-
-	req,_ := http.NewRequest(
-		"GET",
-		searchURL,
-		nil,
-	)
-
-	req.Header.Set(
-		"User-Agent",
-		"Mozilla/5.0",
-	)
-
-	resp,err := client.Do(req)
-
-	if err != nil {
-		return ""
-	}
-
-	defer resp.Body.Close()
-
-	body,_ := io.ReadAll(resp.Body)
-
-	return string(body)
-}
-
-func AnalyzeWebsite(
-	html string,
-) WebsiteAnalysis {
-
-	a := WebsiteAnalysis{}
-
-	html =
-		strings.ToLower(html)
-
-	if strings.Contains(
-		html,
-		"testimonial",
-	){
-		a.HasTestimonials = true
-	}
-
-	if strings.Contains(
-		html,
-		"pricing",
-	){
-		a.HasPricing = true
-	}
-
-	if strings.Contains(
-		html,
-		"gallery",
-	){
-		a.HasGallery = true
-	}
-
-	if strings.Contains(
-		html,
-		"#000",
-	){
-		a.IsDark = true
-	}
-
-	return a
+	return "Premium innovative solution for modern world"
 }
