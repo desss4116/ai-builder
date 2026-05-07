@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -17,19 +14,13 @@ import (
 )
 
 type Site struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Niche       string `json:"niche"`
-	Description string `json:"description"`
-	HTML        string `json:"html"`
-	URL         string `json:"url"`
-	CreatedAt   string `json:"created_at"`
+	ID      string `json:"id"`
+	Prompt  string `json:"prompt"`
+	HTML    string `json:"html"`
+	Created string `json:"created"`
 }
 
-var (
-	sitesFile = "sites.json"
-	domain    = ""
-)
+var sites = map[string]Site{}
 
 func main() {
 
@@ -38,13 +29,7 @@ func main() {
 	token := os.Getenv("DISCORD_TOKEN")
 
 	if token == "" {
-		log.Fatal("DISCORD_TOKEN not found")
-	}
-
-	domain = os.Getenv("DOMAIN")
-
-	if domain == "" {
-		log.Fatal("DOMAIN not found")
+		log.Fatal("DISCORD_TOKEN missing")
 	}
 
 	dg, err := discordgo.New("Bot " + token)
@@ -55,9 +40,10 @@ func main() {
 
 	dg.Identify.Intents =
 		discordgo.IntentsGuildMessages |
+			discordgo.IntentsDirectMessages |
 			discordgo.IntentsMessageContent
 
-	dg.AddHandler(onMessage)
+	dg.AddHandler(messageHandler)
 
 	err = dg.Open()
 
@@ -65,12 +51,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println("Bot online")
+	loadSites()
 
 	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/api/generate", generateHandler)
 	http.HandleFunc("/site/", siteHandler)
-	http.HandleFunc("/api/sites", sitesHandler)
+	http.HandleFunc("/api/generate", apiGenerateHandler)
 
 	port := os.Getenv("PORT")
 
@@ -78,217 +63,222 @@ func main() {
 		port = "8080"
 	}
 
+	log.Println("Bot online")
 	log.Println("Server running on port", port)
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
+func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Author.Bot {
 		return
 	}
 
-	content := strings.TrimSpace(m.Content)
+	msg := strings.ToLower(m.Content)
 
-	if content == "" {
+	if !isWebsiteRequest(msg) {
+
+		reply := randomChatReply()
+
+		s.ChannelMessageSend(m.ChannelID, reply)
+
 		return
 	}
 
-	s.ChannelTyping(m.ChannelID)
-
 	go func() {
 
-		site := generateSite(content)
+		typingStart(s, m.ChannelID)
+
+		site := generateWebsite(msg)
 
 		saveSite(site)
 
-		msg := fmt.Sprintf(
-			"✅ Сайт создан:\n%s/site/%s",
+		domain := os.Getenv("DOMAIN")
+
+		url := fmt.Sprintf(
+			"%s/site/%s",
 			domain,
 			site.ID,
 		)
 
-		_, err := s.ChannelMessageSend(
-			m.ChannelID,
-			msg,
-		)
+		dm, err := s.UserChannelCreate(m.Author.ID)
 
-		if err != nil {
-			log.Println(err)
+		if err == nil {
+
+			s.ChannelMessageSend(
+				dm.ID,
+				"✅ Ваш сайт готов:\n"+url,
+			)
+
+			s.ChannelMessageSend(
+				m.ChannelID,
+				"📩 Сайт отправлен в личные сообщения",
+			)
+
+		} else {
+
+			s.ChannelMessageSend(
+				m.ChannelID,
+				"✅ Сайт создан:\n"+url,
+			)
 		}
 
 	}()
 }
 
-func generateHandler(w http.ResponseWriter, r *http.Request) {
+func isWebsiteRequest(msg string) bool {
 
-	type Req struct {
-		Prompt string `json:"prompt"`
+	keywords := []string{
+		"создай",
+		"сделай",
+		"site",
+		"website",
+		"landing",
+		"лендинг",
+		"магазин",
+		"сайт",
+		"portfolio",
+		"store",
+		"shop",
+		"ecommerce",
+		"build",
 	}
 
-	var req Req
+	for _, k := range keywords {
 
-	err := json.NewDecoder(r.Body).Decode(&req)
-
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
+		if strings.Contains(msg, k) {
+			return true
+		}
 	}
 
-	site := generateSite(req.Prompt)
-
-	saveSite(site)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(site)
+	return false
 }
 
-func generateSite(prompt string) Site {
+func randomChatReply() string {
+
+	replies := []string{
+		"👋 Напиши: создай сайт для кофейни",
+		"🚀 Я умею создавать сайты",
+		"💡 Попробуй: website for sneakers",
+		"🎨 Могу сделать landing page",
+		"⚡ Создаю современные сайты",
+		"🔥 Попробуй: сделай сайт для кроссовок",
+	}
+
+	return replies[rand.Intn(len(replies))]
+}
+
+func detectSiteType(prompt string) string {
+
+	prompt = strings.ToLower(prompt)
+
+	if strings.Contains(prompt, "coffee") ||
+		strings.Contains(prompt, "коф") ||
+		strings.Contains(prompt, "restaurant") {
+		return "restaurant"
+	}
+
+	if strings.Contains(prompt, "shoe") ||
+		strings.Contains(prompt, "sneaker") ||
+		strings.Contains(prompt, "крос") {
+		return "ecommerce"
+	}
+
+	if strings.Contains(prompt, "portfolio") {
+		return "portfolio"
+	}
+
+	if strings.Contains(prompt, "agency") {
+		return "agency"
+	}
+
+	return "saas"
+}
+
+func randomStyle() string {
+
+	styles := []string{
+		"dark",
+		"glass",
+		"luxury",
+		"minimal",
+		"neon",
+	}
+
+	return styles[rand.Intn(len(styles))]
+}
+
+func generateWebsite(prompt string) Site {
+
+	siteType := detectSiteType(prompt)
+
+	style := randomStyle()
+
+	html := buildHTML(siteType, style, prompt)
 
 	id := randomID()
 
-	niche := detectNiche(prompt)
-
-	name := generateName(niche)
-
-	description := generateDescription(niche)
-
-	html := buildHTML(name, niche, description)
-
 	return Site{
-		ID:          id,
-		Name:        name,
-		Niche:       niche,
-		Description: description,
-		HTML:        html,
-		URL:         domain + "/site/" + id,
-		CreatedAt:   time.Now().Format(time.RFC3339),
+		ID:      id,
+		Prompt:  prompt,
+		HTML:    html,
+		Created: time.Now().String(),
 	}
 }
 
-func detectNiche(prompt string) string {
+func buildHTML(siteType string, style string, prompt string) string {
 
-	p := strings.ToLower(prompt)
-
-	switch {
-
-	case strings.Contains(p, "coffee"):
-		return "coffee"
-
-	case strings.Contains(p, "коф"):
-		return "coffee"
-
-	case strings.Contains(p, "fit"):
-		return "fitness"
-
-	case strings.Contains(p, "фит"):
-		return "fitness"
-
-	case strings.Contains(p, "food"):
-		return "food"
-
-	case strings.Contains(p, "ед"):
-		return "food"
-
-	case strings.Contains(p, "resume"):
-		return "resume"
-
-	case strings.Contains(p, "резюме"):
-		return "resume"
-
-	default:
-		return "business"
-	}
-}
-
-func generateName(niche string) string {
-
-	data := map[string][]string{
-		"coffee": {
-			"Coffee House",
-			"Dark Roast",
-			"Urban Coffee",
-		},
-		"fitness": {
-			"Fit Power",
-			"Next Gym",
-			"Body Studio",
-		},
-		"food": {
-			"Fast Delivery",
-			"Food Point",
-			"Food Express",
-		},
-		"resume": {
-			"Resume Pro",
-			"CV Builder",
-			"Career Boost",
-		},
-		"business": {
-			"Business Pro",
-			"Modern Agency",
-			"Startup Studio",
-		},
-	}
-
-	list := data[niche]
-
-	return list[rand.Intn(len(list))]
-}
-
-func generateDescription(niche string) string {
-
-	switch niche {
-
-	case "coffee":
-		return "Лучший кофе в городе с уютной атмосферой."
-
-	case "fitness":
-		return "Современный фитнес клуб для сильных людей."
-
-	case "food":
-		return "Быстрая доставка еды за считанные минуты."
-
-	case "resume":
-		return "Создавайте профессиональные резюме онлайн."
-
-	default:
-		return "Профессиональные решения для бизнеса."
-	}
-}
-
-func buildHTML(name, niche, description string) string {
+	title := strings.Title(prompt)
 
 	bg := "#0f172a"
-	accent := "#7c3aed"
+	card := "#111827"
+	accent := "#3b82f6"
 
-	switch niche {
+	switch style {
 
-	case "coffee":
-		bg = "#1c1917"
-		accent = "#c2410c"
+	case "glass":
+		bg = "linear-gradient(135deg,#0f172a,#1e293b)"
+		card = "rgba(255,255,255,0.08)"
+		accent = "#06b6d4"
 
-	case "fitness":
-		bg = "#111827"
-		accent = "#22c55e"
+	case "luxury":
+		bg = "#0a0a0a"
+		card = "#171717"
+		accent = "#d4af37"
 
-	case "food":
-		bg = "#1f2937"
-		accent = "#ef4444"
+	case "minimal":
+		bg = "#ffffff"
+		card = "#f3f4f6"
+		accent = "#111827"
 
-	case "resume":
-		bg = "#0f172a"
-		accent = "#3b82f6"
+	case "neon":
+		bg = "#020617"
+		card = "#111827"
+		accent = "#22d3ee"
 	}
 
-	html := fmt.Sprintf(`
+	heroText := "Modern AI Generated Website"
+
+	if siteType == "restaurant" {
+		heroText = "Premium Restaurant Experience"
+	}
+
+	if siteType == "ecommerce" {
+		heroText = "Next Generation Store"
+	}
+
+	if siteType == "portfolio" {
+		heroText = "Creative Portfolio"
+	}
+
+	return fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
 <head>
 
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>%s</title>
@@ -302,173 +292,112 @@ box-sizing:border-box;
 }
 
 body{
-font-family:Arial,sans-serif;
+font-family:Arial;
 background:%s;
 color:white;
 overflow-x:hidden;
 }
 
 .hero{
-min-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
+padding:120px 20px;
 text-align:center;
-padding:40px;
 }
 
-h1{
-font-size:64px;
-margin-bottom:20px;
-}
-
-p{
-font-size:22px;
-max-width:700px;
-line-height:1.6;
-opacity:0.9;
-}
-
-button{
-margin-top:30px;
-padding:16px 32px;
-border:none;
-border-radius:14px;
-background:%s;
-color:white;
-font-size:18px;
-cursor:pointer;
-transition:0.3s;
-}
-
-button:hover{
-transform:scale(1.05);
-}
-
-.cards{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:20px;
-padding:60px;
-}
-
-.card{
-background:rgba(255,255,255,0.08);
-padding:30px;
-border-radius:20px;
-backdrop-filter:blur(10px);
-}
-
-footer{
-padding:40px;
-text-align:center;
-opacity:0.6;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<section class="hero">
-
-<h1>%s</h1>
-
-<p>%s</p>
-
-<button>Начать</button>
-
-</section>
-
-<section class="cards">
-
-<div class="card">
-<h2>⚡ Быстро</h2>
-<p>Современная производительность.</p>
-</div>
-
-<div class="card">
-<h2>🎨 Красиво</h2>
-<p>Профессиональный дизайн.</p>
-</div>
-
-<div class="card">
-<h2>🚀 Готово</h2>
-<p>Мгновенный запуск сайта.</p>
-</div>
-
-</section>
-
-<footer>
-%s © 2026
-</footer>
-
-</body>
-</html>
-`,
-		name,
-		bg,
-		accent,
-		name,
-		description,
-		name,
-	)
-
-	return html
-}
-
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-
-	html := `
-<!DOCTYPE html>
-<html>
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>AI Builder</title>
-
-<style>
-
-body{
-margin:0;
-font-family:Arial,sans-serif;
-background:#0f172a;
-color:white;
-}
-
-.hero{
-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-text-align:center;
-padding:20px;
-}
-
-h1{
+.title{
 font-size:72px;
+font-weight:bold;
 margin-bottom:20px;
 }
 
-p{
+.subtitle{
 font-size:22px;
-opacity:0.8;
+opacity:.85;
 max-width:700px;
+margin:auto;
+line-height:1.6;
 }
 
-a{
-margin-top:30px;
-padding:18px 36px;
-background:#7c3aed;
+.btn{
+margin-top:40px;
+display:inline-block;
+padding:18px 42px;
+background:%s;
 border-radius:16px;
 text-decoration:none;
 color:white;
+font-weight:bold;
+transition:.3s;
+box-shadow:0 10px 40px rgba(0,0,0,.3);
+}
+
+.btn:hover{
+transform:translateY(-5px) scale(1.03);
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:24px;
+padding:60px 30px;
+}
+
+.card{
+background:%s;
+padding:30px;
+border-radius:24px;
+backdrop-filter:blur(12px);
+box-shadow:0 10px 40px rgba(0,0,0,.25);
+transition:.3s;
+}
+
+.card:hover{
+transform:translateY(-8px);
+}
+
+.card h2{
+margin-bottom:12px;
+}
+
+.features{
+padding:80px 30px;
+}
+
+.section-title{
+font-size:42px;
+margin-bottom:40px;
+text-align:center;
+}
+
+.preview{
+padding:100px 30px;
+text-align:center;
+}
+
+.mockup{
+margin:auto;
+max-width:900px;
+background:%s;
+padding:40px;
+border-radius:30px;
+box-shadow:0 10px 50px rgba(0,0,0,.4);
+}
+
+.footer{
+padding:60px;
+text-align:center;
+opacity:.7;
+}
+
+@media(max-width:768px){
+
+.title{
+font-size:44px;
+}
+
+.subtitle{
 font-size:18px;
+}
+
 }
 
 </style>
@@ -479,108 +408,181 @@ font-size:18px;
 
 <section class="hero">
 
-<h1>🚀 AI Builder</h1>
+<div class="title">%s</div>
 
-<p>Create websites instantly with smart generation.</p>
+<div class="subtitle">
+%s
+</div>
 
-<a href="/api/sites">
-Open Sites
+<a href="#" class="btn">
+Get Started
 </a>
 
 </section>
 
+<section class="features">
+
+<div class="section-title">
+Features
+</div>
+
+<div class="grid">
+
+<div class="card">
+<h2>⚡ Fast</h2>
+<p>Ultra lightweight architecture.</p>
+</div>
+
+<div class="card">
+<h2>🎨 Modern</h2>
+<p>Premium responsive interface.</p>
+</div>
+
+<div class="card">
+<h2>🚀 Scalable</h2>
+<p>Concurrent multi-user generation.</p>
+</div>
+
+<div class="card">
+<h2>🧠 Smart</h2>
+<p>Pseudo AI deterministic generation.</p>
+</div>
+
+</div>
+
+</section>
+
+<section class="preview">
+
+<div class="section-title">
+Live Preview
+</div>
+
+<div class="mockup">
+
+<h2 style="margin-bottom:20px">
+%s
+</h2>
+
+<p style="opacity:.8">
+Generated individually for user request.
+</p>
+
+</div>
+
+</section>
+
+<div class="footer">
+Generated by AI Builder
+</div>
+
 </body>
+
 </html>
-`
-
-	w.Write([]byte(html))
-}
-
-func siteHandler(w http.ResponseWriter, r *http.Request) {
-
-	id := strings.TrimPrefix(r.URL.Path, "/site/")
-
-	sites := loadSites()
-
-	for _, site := range sites {
-
-		if site.ID == id {
-
-			tmpl, err := template.New("site").Parse(site.HTML)
-
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-			}
-
-			var buf bytes.Buffer
-
-			err = tmpl.Execute(&buf, nil)
-
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-			}
-
-			w.Header().Set("Content-Type", "text/html")
-
-			w.Write(buf.Bytes())
-
-			return
-		}
-	}
-
-	http.NotFound(w, r)
-}
-
-func sitesHandler(w http.ResponseWriter, r *http.Request) {
-
-	sites := loadSites()
-
-	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(sites)
-}
-
-func saveSite(site Site) {
-
-	sites := loadSites()
-
-	sites = append(sites, site)
-
-	data, _ := json.MarshalIndent(sites, "", "  ")
-
-	os.WriteFile(sitesFile, data, 0644)
-}
-
-func loadSites() []Site {
-
-	var sites []Site
-
-	file, err := os.Open(sitesFile)
-
-	if err != nil {
-		return []Site{}
-	}
-
-	defer file.Close()
-
-	data, _ := io.ReadAll(file)
-
-	json.Unmarshal(data, &sites)
-
-	return sites
+`, title, bg, accent, card, card, title, heroText, title)
 }
 
 func randomID() string {
 
 	chars := "abcdefghijklmnopqrstuvwxyz0123456789"
 
-	var result strings.Builder
+	result := ""
 
 	for i := 0; i < 12; i++ {
-		result.WriteByte(chars[rand.Intn(len(chars))])
+		result += string(chars[rand.Intn(len(chars))])
 	}
 
-	return result.String()
+	return result
+}
+
+func saveSite(site Site) {
+
+	sites[site.ID] = site
+
+	data, _ := json.MarshalIndent(sites, "", "  ")
+
+	os.WriteFile("sites.json", data, 0644)
+}
+
+func loadSites() {
+
+	data, err := os.ReadFile("sites.json")
+
+	if err != nil {
+		return
+	}
+
+	json.Unmarshal(data, &sites)
+}
+
+func typingStart(s *discordgo.Session, channelID string) {
+
+	s.ChannelTyping(channelID)
+}
+
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Fprintf(w, `
+<html>
+
+<body style="
+background:#0f172a;
+color:white;
+font-family:Arial;
+padding:60px;
+">
+
+<h1>AI Builder</h1>
+
+<p>
+Discord AI Website Builder
+</p>
+
+</body>
+
+</html>
+`)
+}
+
+func siteHandler(w http.ResponseWriter, r *http.Request) {
+
+	id := strings.TrimPrefix(r.URL.Path, "/site/")
+
+	site, ok := sites[id]
+
+	if !ok {
+
+		http.NotFound(w, r)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+
+	fmt.Fprint(w, site.HTML)
+}
+
+func apiGenerateHandler(w http.ResponseWriter, r *http.Request) {
+
+	prompt := r.URL.Query().Get("prompt")
+
+	if prompt == "" {
+		prompt = "modern website"
+	}
+
+	site := generateWebsite(prompt)
+
+	saveSite(site)
+
+	domain := os.Getenv("DOMAIN")
+
+	url := fmt.Sprintf(
+		"%s/site/%s",
+		domain,
+		site.ID,
+	)
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"url": url,
+	})
 }
