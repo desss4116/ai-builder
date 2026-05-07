@@ -8,58 +8,63 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
 	"://github.com"
 )
 
 func main() {
 	database.InitDB()
 	
-	token := os.Getenv("DISCORD_TOKEN")
-	dg, err := discordgo.New("Bot " + token)
+	dg, err := discordgo.New("Bot " + os.Getenv("DISCORD_TOKEN"))
 	if err != nil { log.Fatal(err) }
 
 	dg.AddHandler(messageHandler)
 	dg.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsMessageContent
-	
 	if err = dg.Open(); err != nil { log.Fatal(err) }
 
-	// HTTP Сервер для Railway
-	http.HandleFunc("/site/", func(w http.ResponseWriter, r *http.Request) {
-		id := strings.TrimPrefix(r.URL.Path, "/site/")
-		// Здесь логика выдачи HTML из базы данных
-		html := database.GetSiteHTML(id) 
-		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, html)
-	})
+	// Роутинг
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "index.html") })
+	http.HandleFunc("/editor/", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "editor.html") })
+	http.HandleFunc("/site/", siteServeHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" { port = "8080" }
-	log.Printf("AI Builder Online on port %s", port)
+	log.Printf("🚀 AI.OS Core Online | Port: %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.Bot { return }
-	msg := strings.ToLower(m.Content)
+	input := strings.TrimSpace(m.Content)
 
-	if isWebsiteRequest(msg) {
+	if isWebsiteRequest(strings.ToLower(input)) {
 		s.ChannelTyping(m.ChannelID)
-		html := engine.GenerateWebsite(m.Content)
-		id := database.SaveGeneratedSite(m.Content, html) // Возвращает ID
-		
+		html := engine.GenerateWebsite(input)
+		id := fmt.Sprintf("%d", time.Now().UnixNano())
+		database.SaveGeneratedSite(id, input, html)
+
 		domain := os.Getenv("DOMAIN")
-		s.ChannelMessageSend(m.ChannelID, "✨ Сайт готов: " + domain + "/site/" + id)
+		msg := fmt.Sprintf("✨ **Website Intelligence Engine**\n\n✅ Продукт готов: %s/site/%s\n🎨 Редактор: %s/editor/%s", domain, id, domain, id)
+		s.ChannelMessageSend(m.ChannelID, msg)
 	} else {
-		// Просто отвечаем на вопросы, используя поиск
-		info := engine.SearchInternet(m.Content)
-		s.ChannelMessageSend(m.ChannelID, "🧠 Анализ сети: " + info)
+		s.ChannelTyping(m.ChannelID)
+		// Умный поиск вместо простых ответов
+		data := engine.SearchInternet(input)
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("🧠 **AI Intelligence Layer**\n\n%s", data))
 	}
 }
 
+func siteServeHandler(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/site/")
+	html := database.GetSiteHTML(id) 
+	if html == "" { http.NotFound(w, r); return }
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprint(w, html)
+}
+
 func isWebsiteRequest(msg string) bool {
-	triggers := []string{"создай сайт", "сделай сайт", "website", "build", "create", "лендинг"}
-	for _, t := range triggers {
-		if strings.Contains(msg, t) { return true }
-	}
+	triggers := []string{"сайт", "website", "build", "landing", "создай", "сделай"}
+	for _, t := range triggers { if strings.Contains(msg, t) { return true } }
 	return false
 }
