@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+
+<style>
+
+body{
+margin:0;
+display:flex;
+height:100vh;
+background:#111;
+font-family:sans-serif;
+}
+
+.sidebar{
+width:250px;
+background:#18181b;
+padding:20px;
+color:white;
+}
+
+.block{
+background:#27272a;
+padding:14px;
+margin-bottom:10px;
+border-radius:10px;
+cursor:pointer;
+}
+
+.canvas{
+flex:1;
+background:white;
+position:relative;
+overflow:hidden;
+}
+
+.element{
+position:absolute;
+padding:20px;
+background:#7c3aed;
+color:white;
+border-radius:12px;
+cursor:move;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h2>Blocks</h2>
+
+<div class="block" onclick="add('Title')">Title</div>
+<div class="block" onclick="add('Button')">Button</div>
+
+</div>
+
+<div class="canvas" id="canvas"></div>
+
+<script>
+
+function add(text){
+
+ let el=document.createElement("div")
+
+ el.className="element"
+
+ el.innerHTML=text
+
+ el.style.left="100px"
+ el.style.top="100px"
+
+ canvas.appendChild(el)
+
+ interact(el).draggable({
+  listeners:{
+   move(event){
+
+    let x=(parseFloat(el.getAttribute('x'))||0)+event.dx
+    let y=(parseFloat(el.getAttribute('y'))||0)+event.dy
+
+    el.style.transform=
+      `translate(${x}px,${y}px)`
+
+    el.setAttribute('x',x)
+    el.setAttribute('y',y)
+   }
+  }
+ })
+
+}
+
+</script>
+
+</body>
+</html>
