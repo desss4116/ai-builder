@@ -14,13 +14,20 @@ func Crawl(url string) string {
 		Timeout: 15 * time.Second,
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(
+		"GET",
+		url,
+		nil,
+	)
 
 	if err != nil {
 		return ""
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0")
+	req.Header.Set(
+		"User-Agent",
+		"Mozilla/5.0",
+	)
 
 	resp, err := client.Do(req)
 
@@ -59,8 +66,8 @@ func Crawl(url string) string {
 
 	text = strings.TrimSpace(text)
 
-	if len(text) > 4000 {
-		text = text[:4000]
+	if len(text) > 5000 {
+		text = text[:5000]
 	}
 
 	return text
