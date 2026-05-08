@@ -1,8 +1,12 @@
 package main
 
 import (
-	"ai-builder/database"
+	"ai-builder/analysis"
 	"ai-builder/engine"
+	"ai-builder/internet"
+	"ai-builder/parser"
+	"ai-builder/storage"
+
 	"fmt"
 	"log"
 	"net/http"
@@ -10,89 +14,180 @@ import (
 	"strings"
 	"time"
 
-	"://github.com"
+	"github.com/bwmarrin/discordgo"
 )
 
+var sites = map[string]string{}
+
 func main() {
-	database.InitDB()
-	
-	dg, err := discordgo.New("Bot " + os.Getenv("DISCORD_TOKEN"))
+
+	token := os.Getenv("DISCORD_TOKEN")
+
+	if token == "" {
+		log.Fatal("DISCORD_TOKEN missing")
+	}
+
+	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	dg.AddHandler(messageHandler)
-	dg.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsMessageContent
+	dg.Identify.Intents =
+		discordgo.IntentsGuildMessages |
+			discordgo.IntentsMessageContent
 
-	if err = dg.Open(); err != nil {
+	dg.AddHandler(messageCreate)
+
+	err = dg.Open()
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Маршруты
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "index.html") })
-	http.HandleFunc("/site/", siteServeHandler)
-	http.HandleFunc("/editor/", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "editor.html") })
+	fmt.Println("Bot online")
+
+	http.HandleFunc("/site/", serveSite)
 
 	port := os.Getenv("PORT")
-	if port == "" { port = "8080" }
-	log.Printf("🚀 Intelligence OS System Online | Port: %s", port)
+
+	if port == "" {
+		port = "8080"
+	}
+
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.Bot { return }
+func messageCreate(
+	s *discordgo.Session,
+	m *discordgo.MessageCreate,
+) {
 
-	input := strings.TrimSpace(m.Content)
-	lowInput := strings.ToLower(input)
-
-	// 1. ЛОГИКА СОЗДАНИЯ САЙТА (Строгие триггеры)
-	if isWebsiteRequest(lowInput) {
-		s.ChannelTyping(m.ChannelID)
-		
-		// Генерация
-		html := engine.GenerateWebsite(input)
-		id := fmt.Sprintf("%d", time.Now().UnixNano())
-		database.SaveGeneratedSite(id, input, html)
-
-		domain := os.Getenv("DOMAIN")
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("✨ **Web-OS Engine:** Сайт готов!\n🌍 Ссылка: %s/site/%s", domain, id))
+	if m.Author.Bot {
 		return
 	}
 
-	// 2. ИНТЕЛЛЕКТУАЛЬНЫЙ ПОИСК (Для всех остальных вопросов)
-	s.ChannelTyping(m.ChannelID)
-	
-	// Вызываем твой метод поиска
-	searchResult := engine.SearchInternet(input)
-	
-	if len(searchResult) < 5 {
-		s.ChannelMessageSend(m.ChannelID, "🔍 Информационный слой пуст. Попробуйте другой запрос.")
+	content := strings.TrimSpace(m.Content)
+
+	// WEBSITE REQUEST
+	if parser.IsWebsiteRequest(content) {
+
+		go handleWebsiteRequest(s, m, content)
+
 		return
 	}
 
-	// Отправляем РЕАЛЬНЫЙ ответ из интернета
-	header := "🧠 **AI Research Layer:**\n\n"
-	s.ChannelMessageSend(m.ChannelID, header + searchResult)
+	// NORMAL CHAT
+	go handleChatRequest(s, m, content)
 }
 
-func isWebsiteRequest(msg string) bool {
-    // Убираем лишние слова, оставляем только четкие команды на создание
-	triggers := []string{"создай сайт", "сделай сайт", "build website", "create site", "сгенерируй лендинг"}
-	for _, t := range triggers {
-		if strings.Contains(msg, t) {
-			return true
-		}
+func handleChatRequest(
+	s *discordgo.Session,
+	m *discordgo.MessageCreate,
+	query string,
+) {
+
+	html, err := internet.SearchInternet(query)
+	if err != nil {
+
+		s.ChannelMessageSend(
+			m.ChannelID,
+			"Ошибка поиска в интернете.",
+		)
+
+		return
 	}
-	return false
+
+	results := internet.ExtractTitles(html)
+
+	response := parser.BuildChatResponse(
+		query,
+		results,
+	)
+
+	s.ChannelMessageSend(
+		m.ChannelID,
+		response,
+	)
 }
 
-func siteServeHandler(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, "/site/")
-	html := database.GetSiteHTML(id) 
-	if html == "" {
+func handleWebsiteRequest(
+	s *discordgo.Session,
+	m *discordgo.MessageCreate,
+	query string,
+) {
+
+	s.ChannelMessageSend(
+		m.ChannelID,
+		"🌐 Анализирую интернет и создаю сайт...",
+	)
+
+	// INTERNET SEARCH
+	searchHTML, _ := internet.SearchInternet(query)
+
+	// ANALYSIS
+	style := analysis.DetectStyle(searchHTML)
+
+	_ = style
+
+	// GENERATE SITE
+	siteHTML := engine.GenerateWebsite(query)
+
+	// SITE ID
+	siteID := fmt.Sprintf(
+		"%d",
+		time.Now().UnixNano(),
+	)
+
+	sites[siteID] = siteHTML
+
+	// SAVE
+	storage.SaveSite(storage.Site{
+		ID:    siteID,
+		HTML:  siteHTML,
+		Title: query,
+	})
+
+	// DOMAIN
+	domain := os.Getenv("DOMAIN")
+
+	if domain == "" {
+		domain = "http://localhost:8080"
+	}
+
+	link := fmt.Sprintf(
+		"%s/site/%s",
+		domain,
+		siteID,
+	)
+
+	s.ChannelMessageSend(
+		m.ChannelID,
+		"✅ Сайт создан:\n"+link,
+	)
+}
+
+func serveSite(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	id := strings.TrimPrefix(
+		r.URL.Path,
+		"/site/",
+	)
+
+	html, ok := sites[id]
+
+	if !ok {
+
 		http.NotFound(w, r)
+
 		return
 	}
-	w.Header().Set("Content-Type", "text/html")
+
+	w.Header().Set(
+		"Content-Type",
+		"text/html",
+	)
+
 	fmt.Fprint(w, html)
 }
