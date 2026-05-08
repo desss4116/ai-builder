@@ -2,7 +2,6 @@ package main
 
 import (
 	"ai-builder/internet"
-	"ai-builder/summarizer"
 	"log"
 	"os"
 	"strings"
@@ -47,7 +46,7 @@ func messageCreate(
 	m *discordgo.MessageCreate,
 ) {
 
-	// Ignore bots
+	// ignore bots
 	if m.Author.Bot {
 		return
 	}
@@ -58,75 +57,27 @@ func messageCreate(
 		return
 	}
 
-	// Thinking message
+	// loading message
 	s.ChannelMessageSend(
 		m.ChannelID,
 		"🧠 Анализирую запрос...",
 	)
 
-	// Search
-	results := internet.Search(query)
+	// AI smart answer
+	answer := internet.SmartAnswer(query)
 
-	if len(results) == 0 {
-
-		s.ChannelMessageSend(
-			m.ChannelID,
-			"❌ Ничего не найдено.",
-		)
-
-		return
-	}
-
-	// Multi-source extraction
-	var combined string
-
-	maxSources := 3
-
-	if len(results) < maxSources {
-		maxSources = len(results)
-	}
-
-	for i := 0; i < maxSources; i++ {
-
-		url := results[i].URL
-
-		html := internet.FetchPage(url)
-
-		if html == "" {
-			continue
-		}
-
-		clean := internet.ExtractCleanText(html)
-
-		if clean == "" {
-			continue
-		}
-
-		combined += clean + "\n\n"
-	}
-
-	// No extracted content
-	if combined == "" {
-
-		s.ChannelMessageSend(
-			m.ChannelID,
-			"❌ Не удалось извлечь информацию.",
-		)
-
-		return
-	}
-
-	// Build AI answer
-	answer := summarizer.BuildAnswer(combined)
-
-	// Discord limit
+	// discord limit
 	if len(answer) > 1900 {
 		answer = answer[:1900]
 	}
 
-	// Send answer
-	s.ChannelMessageSend(
+	// send answer
+	_, err := s.ChannelMessageSend(
 		m.ChannelID,
 		answer,
 	)
+
+	if err != nil {
+		log.Println(err)
+	}
 }
