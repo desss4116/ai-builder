@@ -49,15 +49,27 @@ func messageCreate(
 	m *discordgo.MessageCreate,
 ) {
 
+	/*
+	   IGNORE BOTS
+	*/
+
 	if m.Author.Bot {
 		return
 	}
+
+	/*
+	   CLEAN MESSAGE
+	*/
 
 	message := strings.TrimSpace(m.Content)
 
 	if message == "" {
 		return
 	}
+
+	/*
+	   DETECT INTENT
+	*/
 
 	intent := brain.DetectIntent(message)
 
@@ -72,35 +84,35 @@ func messageCreate(
 
 		s.ChannelMessageSend(
 			m.ChannelID,
-			"🚀 NEXT.JS APP GENERATED\n\n"+project,
+			"🚀 NEXT.JS PROJECT GENERATED\n\n"+project,
 		)
 
 		return
 	}
 
 	/*
-	   LIVE INTERNET SEARCH
+	   REAL GOOGLE SEARCH
 	*/
 
-	liveData :=
-		internet.LiveSearch(message)
+	searchResult :=
+		internet.GoogleSearch(message)
 
 	/*
-	   SCRAPING
+	   SCRAPING / CLEANING
 	*/
 
-	scraped :=
-		internet.ScrapeContent(liveData)
+	cleanContent :=
+		internet.ScrapeContent(searchResult)
 
 	/*
 	   AI SUMMARY
 	*/
 
 	summary :=
-		summarizer.Summarize(scraped)
+		summarizer.Summarize(cleanContent)
 
 	/*
-	   AI REASONING
+	   REASONING
 	*/
 
 	answer :=
@@ -110,11 +122,31 @@ func messageCreate(
 		)
 
 	/*
-	   SEND
+	   FALLBACK
 	*/
 
-	s.ChannelMessageSend(
+	if strings.TrimSpace(answer) == "" {
+
+		answer = `
+❌ Не удалось получить ответ.
+
+Попробуй:
+- уточнить запрос
+- написать конкретнее
+- использовать английский язык
+`
+	}
+
+	/*
+	   SEND MESSAGE
+	*/
+
+	_, err = s.ChannelMessageSend(
 		m.ChannelID,
 		answer,
 	)
+
+	if err != nil {
+		log.Println(err)
+	}
 }
