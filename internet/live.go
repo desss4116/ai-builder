@@ -1,7 +1,7 @@
 package internet
 
 import (
-	"fmt"
+	"ai-builder/crawler"
 	"io"
 	"net/http"
 	"net/url"
@@ -16,16 +16,27 @@ func Search(query string) string {
 		Timeout: 20 * time.Second,
 	}
 
-	searchURL := "https://html.duckduckgo.com/html/?q=" + url.QueryEscape(query)
+	searchURL :=
+		"https://html.duckduckgo.com/html/?q=" +
+			url.QueryEscape(query)
 
-	req, err := http.NewRequest("GET", searchURL, nil)
+	req, err := http.NewRequest(
+		"GET",
+		searchURL,
+		nil,
+	)
+
 	if err != nil {
-		return "❌ Ошибка создания запроса."
+		return "❌ Ошибка поиска."
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0")
+	req.Header.Set(
+		"User-Agent",
+		"Mozilla/5.0",
+	)
 
 	resp, err := client.Do(req)
+
 	if err != nil {
 		return "❌ Ошибка подключения."
 	}
@@ -33,41 +44,46 @@ func Search(query string) string {
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
+
 	if err != nil {
 		return "❌ Ошибка чтения."
 	}
 
 	html := string(body)
 
-	// Удаляем мусор
-	html = strings.ReplaceAll(html, "\n", " ")
-	html = strings.ReplaceAll(html, "\r", " ")
+	// extract urls
+	re :=
+		regexp.MustCompile(
+			`uddg=([^"]+)`,
+		)
 
-	// Ищем titles
-	re := regexp.MustCompile(`<a[^>]*class="result__a"[^>]*>(.*?)</a>`)
-
-	matches := re.FindAllStringSubmatch(html, -1)
+	matches := re.FindAllStringSubmatch(
+		html,
+		-1,
+	)
 
 	if len(matches) == 0 {
 		return "❌ Ничего не найдено."
 	}
 
-	results := []string{}
+	var finalText string
+
+	used := 0
 
 	for _, m := range matches {
 
-		title := m[1]
+		if used >= 3 {
+			break
+		}
 
-		// чистка html
-		title = regexp.MustCompile(`<.*?>`).ReplaceAllString(title, "")
-		title = strings.TrimSpace(title)
+		link, err := url.QueryUnescape(m[1])
 
-		if title == "" {
+		if err != nil {
 			continue
 		}
 
-		// мусор фильтр
-		lower := strings.ToLower(title)
+		// skip garbage
+		lower := strings.ToLower(link)
 
 		if strings.Contains(lower, "duckduckgo") {
 			continue
@@ -77,85 +93,44 @@ func Search(query string) string {
 			continue
 		}
 
-		if strings.Contains(lower, "display:none") {
+		if strings.Contains(lower, ".js") {
 			continue
 		}
 
-		results = append(results, "• "+title)
+		// crawl page
+		text := crawler.Crawl(link)
 
-		if len(results) >= 8 {
-			break
+		if len(text) < 300 {
+			continue
 		}
+
+		finalText += text + "\n\n"
+
+		used++
 	}
 
-	if len(results) == 0 {
-		return "❌ Ничего не найдено."
+	if finalText == "" {
+		return "❌ Не удалось получить контент."
 	}
 
-	return "🌐 Ответ:\n\n" + strings.Join(results, "\n\n")
-}
+	// cleanup
+	finalText = strings.ReplaceAll(
+		finalText,
+		"\n",
+		" ",
+	)
 
-func SmartAnswer(query string) string {
+	finalText = regexp.MustCompile(
+		`\s+`,
+	).ReplaceAllString(
+		finalText,
+		" ",
+	)
 
-	q := strings.ToLower(query)
-
-	if strings.Contains(q, "призрачный гонщик") {
-
-		return `🌐 Ответ:
-
-Призрачный гонщик —
-супергеройский фильм Marvel 2007 года.
-
-Главную роль исполнил Николас Кейдж.
-
-Сюжет:
-байкер Джонни Блейз заключает
-сделку с демоном Мефисто,
-после чего превращается
-в Призрачного гонщика —
-охотника за грешными душами.
-
-Жанр:
-• Action
-• Fantasy
-• Superhero
-
-IMDb: 5.3
-
-Фильм основан на комиксах Marvel.`
+	// limit
+	if len(finalText) > 5000 {
+		finalText = finalText[:5000]
 	}
 
-	if strings.Contains(q, "байден") {
-
-		return `🌐 Ответ:
-
-Джо Байден —
-46-й президент США.
-
-Полное имя:
-Джозеф Робинетт Байден-младший.
-
-Родился:
-20 ноября 1942 года.
-
-Партия:
-Демократическая партия США.
-
-До президентства был:
-• сенатором
-• вице-президентом при Бараке Обаме
-
-Известен:
-• поддержкой НАТО
-• экономическими реформами
-• технологическими инвестициями
-• жёсткой внешней политикой`
-	}
-
-	// fallback internet search
-	return Search(query)
-}
-
-func Debug(query string) {
-	fmt.Println(Search(query))
+	return finalText
 }
