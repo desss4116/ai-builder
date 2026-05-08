@@ -2,6 +2,7 @@ package internet
 
 import (
 	"regexp"
+	"strings"
 )
 
 func ScrapeContent(html string) string {
@@ -10,8 +11,12 @@ func ScrapeContent(html string) string {
 
 	clean := re.ReplaceAllString(html, "")
 
-	if len(clean) > 3000 {
-		clean = clean[:3000]
+	clean = strings.ReplaceAll(clean, "\n", " ")
+
+	clean = strings.ReplaceAll(clean, "\t", " ")
+
+	if len(clean) > 4000 {
+		clean = clean[:4000]
 	}
 
 	return clean
