@@ -1,53 +1,35 @@
 package summarizer
 
-import "strings"
+import (
+	"strings"
+)
 
-func Summarize(content string) string {
+func Summarize(query string, texts []string) string {
 
-	content = strings.TrimSpace(content)
+	var final []string
 
-	if content == "" {
+	for _, t := range texts {
 
-		return `
-❌ Ничего не найдено.
-`
+		if len(t) < 100 {
+			continue
+		}
+
+		if len(t) > 700 {
+			t = t[:700]
+		}
+
+		final = append(final, t)
 	}
 
-	/*
-	   REMOVE GOOGLE GARBAGE
-	*/
-
-	content = strings.ReplaceAll(
-		content,
-		"Все",
-		"",
-	)
-
-	content = strings.ReplaceAll(
-		content,
-		"Картинки",
-		"",
-	)
-
-	content = strings.ReplaceAll(
-		content,
-		"Видео",
-		"",
-	)
-
-	content = strings.ReplaceAll(
-		content,
-		"Новости",
-		"",
-	)
-
-	/*
-	   LIMIT
-	*/
-
-	if len(content) > 2000 {
-		content = content[:2000]
+	if len(final) == 0 {
+		return "❌ Информация не найдена."
 	}
 
-	return content
+	result := strings.Join(final, "\n\n")
+
+	if len(result) > 1800 {
+		result = result[:1800]
+	}
+
+	return "🌐 Ответ:\n\n" + result
 }
