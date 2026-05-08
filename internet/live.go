@@ -2,6 +2,7 @@ package internet
 
 import (
 	"ai-builder/crawler"
+	"ai-builder/search"
 	"io"
 	"net/http"
 	"net/url"
@@ -64,6 +65,17 @@ func Search(query string) string {
 		return ""
 	}
 
+	trustedDomains := []string{
+		"wikipedia.org",
+		"imdb.com",
+		"kinopoisk",
+		"fandom.com",
+		"reddit.com",
+		"github.com",
+		"medium.com",
+		"britannica.com",
+	}
+
 	var finalText string
 
 	used := 0
@@ -82,25 +94,21 @@ func Search(query string) string {
 
 		lower := strings.ToLower(link)
 
-		// FILTER GARBAGE LINKS
+		allowed := false
+
+		for _, domain := range trustedDomains {
+
+			if strings.Contains(lower, domain) {
+				allowed = true
+				break
+			}
+		}
+
+		if !allowed {
+			continue
+		}
 
 		if strings.Contains(lower, "duckduckgo") {
-			continue
-		}
-
-		if strings.Contains(lower, "wikisource") {
-			continue
-		}
-
-		if strings.Contains(lower, "wiktionary") {
-			continue
-		}
-
-		if strings.Contains(lower, "wikiquote") {
-			continue
-		}
-
-		if strings.Contains(lower, "special:search") {
 			continue
 		}
 
@@ -112,59 +120,9 @@ func Search(query string) string {
 			continue
 		}
 
-		if strings.Contains(lower, "invalid") {
-			continue
-		}
-
 		text := crawler.Crawl(link)
 
-		if len(text) < 500 {
-			continue
-		}
-
-		// FILTER BAD CONTENT
-
-		bad := strings.ToLower(text)
-
-		if strings.Contains(
-			bad,
-			"недопустимое название",
-		) {
-			continue
-		}
-
-		if strings.Contains(
-			bad,
-			"create account",
-		) {
-			continue
-		}
-
-		if strings.Contains(
-			bad,
-			"jump to content",
-		) {
-			continue
-		}
-
-		if strings.Contains(
-			bad,
-			"not have an article",
-		) {
-			continue
-		}
-
-		if strings.Contains(
-			bad,
-			"body { display:none",
-		) {
-			continue
-		}
-
-		if strings.Contains(
-			bad,
-			"enable javascript",
-		) {
+		if search.IsBadContent(text) {
 			continue
 		}
 
@@ -178,7 +136,7 @@ func Search(query string) string {
 	}
 
 	if finalText == "" {
-		return ""
+		return "❌ Не удалось получить информацию."
 	}
 
 	finalText = regexp.MustCompile(
