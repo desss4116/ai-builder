@@ -27,7 +27,7 @@ func Search(query string) string {
 	)
 
 	if err != nil {
-		return "❌ Ошибка поиска."
+		return ""
 	}
 
 	req.Header.Set(
@@ -38,7 +38,7 @@ func Search(query string) string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "❌ Ошибка подключения."
+		return ""
 	}
 
 	defer resp.Body.Close()
@@ -46,16 +46,14 @@ func Search(query string) string {
 	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		return "❌ Ошибка чтения."
+		return ""
 	}
 
 	html := string(body)
 
-	// extract urls
-	re :=
-		regexp.MustCompile(
-			`uddg=([^"]+)`,
-		)
+	re := regexp.MustCompile(
+		`uddg=([^"]+)`,
+	)
 
 	matches := re.FindAllStringSubmatch(
 		html,
@@ -63,7 +61,7 @@ func Search(query string) string {
 	)
 
 	if len(matches) == 0 {
-		return "❌ Ничего не найдено."
+		return ""
 	}
 
 	var finalText string
@@ -72,7 +70,7 @@ func Search(query string) string {
 
 	for _, m := range matches {
 
-		if used >= 3 {
+		if used >= 5 {
 			break
 		}
 
@@ -82,10 +80,27 @@ func Search(query string) string {
 			continue
 		}
 
-		// skip garbage
 		lower := strings.ToLower(link)
 
+		// FILTER GARBAGE LINKS
+
 		if strings.Contains(lower, "duckduckgo") {
+			continue
+		}
+
+		if strings.Contains(lower, "wikisource") {
+			continue
+		}
+
+		if strings.Contains(lower, "wiktionary") {
+			continue
+		}
+
+		if strings.Contains(lower, "wikiquote") {
+			continue
+		}
+
+		if strings.Contains(lower, "special:search") {
 			continue
 		}
 
@@ -97,11 +112,64 @@ func Search(query string) string {
 			continue
 		}
 
-		// crawl page
+		if strings.Contains(lower, "invalid") {
+			continue
+		}
+
 		text := crawler.Crawl(link)
 
-		if len(text) < 300 {
+		if len(text) < 500 {
 			continue
+		}
+
+		// FILTER BAD CONTENT
+
+		bad := strings.ToLower(text)
+
+		if strings.Contains(
+			bad,
+			"недопустимое название",
+		) {
+			continue
+		}
+
+		if strings.Contains(
+			bad,
+			"create account",
+		) {
+			continue
+		}
+
+		if strings.Contains(
+			bad,
+			"jump to content",
+		) {
+			continue
+		}
+
+		if strings.Contains(
+			bad,
+			"not have an article",
+		) {
+			continue
+		}
+
+		if strings.Contains(
+			bad,
+			"body { display:none",
+		) {
+			continue
+		}
+
+		if strings.Contains(
+			bad,
+			"enable javascript",
+		) {
+			continue
+		}
+
+		if len(text) > 2000 {
+			text = text[:2000]
 		}
 
 		finalText += text + "\n\n"
@@ -110,15 +178,8 @@ func Search(query string) string {
 	}
 
 	if finalText == "" {
-		return "❌ Не удалось получить контент."
+		return ""
 	}
-
-	// cleanup
-	finalText = strings.ReplaceAll(
-		finalText,
-		"\n",
-		" ",
-	)
 
 	finalText = regexp.MustCompile(
 		`\s+`,
@@ -127,9 +188,8 @@ func Search(query string) string {
 		" ",
 	)
 
-	// limit
-	if len(finalText) > 5000 {
-		finalText = finalText[:5000]
+	if len(finalText) > 6000 {
+		finalText = finalText[:6000]
 	}
 
 	return finalText
