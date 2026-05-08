@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ai-builder/brain"
 	"ai-builder/internet"
 	"log"
 	"os"
@@ -57,16 +58,22 @@ func messageCreate(
 		return
 	}
 
-	// loading message
+	// thinking message
 	s.ChannelMessageSend(
 		m.ChannelID,
 		"🧠 Анализирую запрос...",
 	)
 
-	// AI smart answer
-	answer := internet.SmartAnswer(query)
+	// internet search
+	raw := internet.Search(query)
 
-	// discord limit
+	// AI answer engine
+	answer := brain.GenerateAnswer(
+		query,
+		raw,
+	)
+
+	// discord message limit
 	if len(answer) > 1900 {
 		answer = answer[:1900]
 	}
