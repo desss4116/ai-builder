@@ -9,9 +9,27 @@ app/
 components/
 sections/
 styles/
+public/
 
-package.json
+app/page.tsx
+app/layout.tsx
+
+components/Hero.tsx
+components/Navbar.tsx
+components/Footer.tsx
+
+styles/globals.css
+
 tailwind.config.js
 next.config.js
+package.json
+
+Features:
+- Next.js
+- TailwindCSS
+- Framer Motion
+- Responsive UI
+- Premium Design
+- Modern Architecture
 `
 }
