@@ -8,15 +8,47 @@ import (
 	"strings"
 )
 
-type Topic struct {
-	Text string `json:"Text"`
+type DuckTopic struct {
+	Text   string      `json:"Text"`
+	Topics []DuckTopic `json:"Topics"`
 }
 
 type DuckResponse struct {
-	Abstract     string  `json:"Abstract"`
-	AbstractText string  `json:"AbstractText"`
-	Heading      string  `json:"Heading"`
-	Related      []Topic `json:"RelatedTopics"`
+	AbstractText string      `json:"AbstractText"`
+	Related      []DuckTopic `json:"RelatedTopics"`
+}
+
+func extractTopics(
+	topics []DuckTopic,
+	output *[]string,
+) {
+
+	for _, topic := range topics {
+
+		/*
+		   DIRECT TEXT
+		*/
+
+		if strings.TrimSpace(topic.Text) != "" {
+
+			*output = append(
+				*output,
+				"• "+topic.Text,
+			)
+		}
+
+		/*
+		   NESTED TOPICS
+		*/
+
+		if len(topic.Topics) > 0 {
+
+			extractTopics(
+				topic.Topics,
+				output,
+			)
+		}
+	}
 }
 
 func LiveSearch(query string) string {
@@ -49,44 +81,37 @@ func LiveSearch(query string) string {
 	}
 
 	/*
-	   MAIN ABSTRACT
+	   ABSTRACT
 	*/
 
-	if result.AbstractText != "" {
-		return result.AbstractText
-	}
+	if strings.TrimSpace(
+		result.AbstractText,
+	) != "" {
 
-	if result.Abstract != "" {
-		return result.Abstract
+		return result.AbstractText
 	}
 
 	/*
 	   RELATED TOPICS
 	*/
 
-	output := ""
+	var outputs []string
 
-	count := 0
+	extractTopics(
+		result.Related,
+		&outputs,
+	)
 
-	for _, topic := range result.Related {
+	if len(outputs) > 0 {
 
-		text := strings.TrimSpace(topic.Text)
-
-		if text == "" {
-			continue
+		if len(outputs) > 5 {
+			outputs = outputs[:5]
 		}
 
-		output += "• " + text + "\n\n"
-
-		count++
-
-		if count >= 5 {
-			break
-		}
-	}
-
-	if output != "" {
-		return output
+		return strings.Join(
+			outputs,
+			"\n\n",
+		)
 	}
 
 	return ""
