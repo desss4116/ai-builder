@@ -6,7 +6,7 @@ import (
 )
 
 type Site struct {
-	ID string `json:"id"`
+	ID   string `json:"id"`
 	HTML string `json:"html"`
 }
 
