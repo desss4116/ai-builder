@@ -11,18 +11,6 @@ func DetectIntent(query string) string {
 		return "website"
 	}
 
-	if strings.Contains(q, "топ") {
-		return "top"
-	}
-
-	if strings.Contains(q, "что такое") {
-		return "education"
-	}
-
-	if strings.Contains(q, "значение слова") {
-		return "dictionary"
-	}
-
 	return "general"
 }
 
@@ -35,9 +23,9 @@ func Think(query string, data string) string {
 		return `
 🎬 Топ фильмы:
 
-1. Dune Part Two
+1. Interstellar
 2. Oppenheimer
-3. Interstellar
+3. Dune Part Two
 4. Blade Runner 2049
 5. Joker
 6. The Batman
@@ -48,25 +36,47 @@ func Think(query string, data string) string {
 `
 	}
 
-	if strings.Contains(q, "кто такой") {
+	if strings.Contains(q, "apple") {
 
 		return `
-📘 Это человек или личность,
-о которой найдена информация и проведён анализ.
+🍎 Apple:
+
+Apple — одна из самых влиятельных
+технологических компаний мира.
+
+Главные особенности:
+- premium UI/UX
+- минимализм
+- экосистема
+- плавные анимации
+- high-end branding
+`
+	}
+
+	if strings.Contains(q, "netflix") {
+
+		return `
+🎬 Netflix UI Architecture:
+
+- cinematic layout
+- dark gradients
+- hover previews
+- recommendation engine
+- adaptive personalization
+- smooth transitions
 `
 	}
 
 	if strings.Contains(q, "что такое") {
 
 		return `
-📖 Это термин или концепция,
-которая означает следующее:
+📘 Объяснение:
 
 ` + data
 	}
 
 	return `
-🧠 Анализ завершён:
+🌐 AI Analysis:
 
 ` + data
 }
