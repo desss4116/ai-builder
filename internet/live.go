@@ -5,11 +5,18 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
+type Topic struct {
+	Text string `json:"Text"`
+}
+
 type DuckResponse struct {
-	Abstract string `json:"Abstract"`
-	Heading  string `json:"Heading"`
+	Abstract     string  `json:"Abstract"`
+	AbstractText string  `json:"AbstractText"`
+	Heading      string  `json:"Heading"`
+	Related      []Topic `json:"RelatedTopics"`
 }
 
 func LiveSearch(query string) string {
@@ -17,7 +24,7 @@ func LiveSearch(query string) string {
 	endpoint :=
 		"https://api.duckduckgo.com/?q=" +
 			url.QueryEscape(query) +
-			"&format=json&no_html=1"
+			"&format=json&pretty=1"
 
 	resp, err := http.Get(endpoint)
 
@@ -35,14 +42,51 @@ func LiveSearch(query string) string {
 
 	var result DuckResponse
 
-	json.Unmarshal(body, &result)
+	err = json.Unmarshal(body, &result)
+
+	if err != nil {
+		return ""
+	}
+
+	/*
+	   MAIN ABSTRACT
+	*/
+
+	if result.AbstractText != "" {
+		return result.AbstractText
+	}
 
 	if result.Abstract != "" {
 		return result.Abstract
 	}
 
-	if result.Heading != "" {
-		return result.Heading
+	/*
+	   RELATED TOPICS
+	*/
+
+	output := ""
+
+	count := 0
+
+	for _, topic := range result.Related {
+
+		text := strings.TrimSpace(topic.Text)
+
+		if text == "" {
+			continue
+		}
+
+		output += "• " + text + "\n\n"
+
+		count++
+
+		if count >= 5 {
+			break
+		}
+	}
+
+	if output != "" {
+		return output
 	}
 
 	return ""
