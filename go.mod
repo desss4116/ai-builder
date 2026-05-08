@@ -3,6 +3,6 @@ module ai-builder
 go 1.22
 
 require (
-	github.com/bwmarrin/discordgo v0.28.1
-	github.com/chromedp/chromedp v0.9.5
+	github.com/PuerkitoBio/goquery v1.10.0
+	github.com/bwmarrin/discordgo v0.29.0
 )
