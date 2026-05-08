@@ -1,33 +1,30 @@
 package search
 
-import "strings"
+import (
+	"strings"
+)
 
 func SemanticSearch(query string) string {
 
 	q := strings.ToLower(query)
 
-	if strings.Contains(q, "фильм") {
-
-		return `
-Semantic matches found:
-
-- Interstellar
-- Oppenheimer
-- Dune Part Two
-`
-	}
+	score := 0
 
 	if strings.Contains(q, "ai") {
+		score += 10
+	}
 
-		return `
-Semantic AI knowledge found:
-- machine learning
-- neural networks
-- reasoning systems
-`
+	if strings.Contains(q, "сайт") {
+		score += 20
+	}
+
+	if strings.Contains(q, "фильм") {
+		score += 15
 	}
 
 	return `
-Semantic analysis completed.
-`
+Semantic ranking completed.
+
+Relevance score:
+` + string(rune(score))
 }
