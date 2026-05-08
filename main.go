@@ -123,7 +123,7 @@ func messageCreate(
 	*/
 
 	searchResult :=
-		internet.GoogleSearch(message)
+	internet.LiveSearch(message)
 
 	/*
 	   SCRAPING / CLEANING
