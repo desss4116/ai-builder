@@ -1,17 +1,18 @@
 package internet
 
-func ScrapeContent(data string) string {
+import (
+	"regexp"
+)
 
-	return `
-Analyzed information:
+func ScrapeContent(html string) string {
 
-` + data + `
+	re := regexp.MustCompile(`<[^>]*>`)
 
-Modern digital systems use:
-- AI reasoning
-- premium UI
-- motion systems
-- responsive architecture
-- scalable frontend ecosystems
-`
+	clean := re.ReplaceAllString(html, "")
+
+	if len(clean) > 3000 {
+		clean = clean[:3000]
+	}
+
+	return clean
 }
