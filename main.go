@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ai-builder/brain"
 	"ai-builder/internet"
 	"fmt"
 	"log"
@@ -27,7 +28,7 @@ func main() {
 	}
 
 	/*
-	   DISCORD SESSION
+	   CREATE DISCORD SESSION
 	*/
 
 	dg, err := discordgo.New(
@@ -51,12 +52,16 @@ func main() {
 	) {
 
 		/*
-		   IGNORE BOT
+		   IGNORE BOTS
 		*/
 
 		if m.Author.Bot {
 			return
 		}
+
+		/*
+		   CLEAN MESSAGE
+		*/
 
 		message :=
 			strings.TrimSpace(
@@ -68,11 +73,13 @@ func main() {
 		}
 
 		/*
-		   INTERNET SEARCH
+		   REAL INTERNET SEARCH
 		*/
 
 		searchResult :=
-			internet.LiveSearch(message)
+			internet.LiveSearch(
+				message,
+			)
 
 		/*
 		   EMPTY RESULT
@@ -83,16 +90,26 @@ func main() {
 		) == "" {
 
 			searchResult =
-				"❌ Ничего не найдено."
+				"❌ Информация не найдена."
 		}
 
 		/*
-		   SEND RESPONSE
+		   FORMAT AI ANSWER
+		*/
+
+		finalAnswer :=
+			brain.FormatAnswer(
+				message,
+				searchResult,
+			)
+
+		/*
+		   SEND MESSAGE
 		*/
 
 		_, err := s.ChannelMessageSend(
 			m.ChannelID,
-			"🌐 Ответ:\n\n"+searchResult,
+			finalAnswer,
 		)
 
 		if err != nil {
@@ -102,7 +119,16 @@ func main() {
 	})
 
 	/*
-	   OPEN DISCORD
+	   DISCORD INTENTS
+	*/
+
+	dg.Identify.Intents =
+		discordgo.IntentsGuildMessages |
+			discordgo.IntentsDirectMessages |
+			discordgo.IntentsMessageContent
+
+	/*
+	   OPEN CONNECTION
 	*/
 
 	err = dg.Open()
@@ -115,7 +141,7 @@ func main() {
 	}
 
 	fmt.Println(
-		"AI Builder Discord Bot Started",
+		"🚀 AI Builder Online",
 	)
 
 	/*
