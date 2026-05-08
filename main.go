@@ -1,11 +1,10 @@
 package main
 
 import (
-	"ai-builder/brain"
-	"ai-builder/generator"
 	"ai-builder/internet"
-	"ai-builder/summarizer"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -21,160 +20,132 @@ func main() {
 	token := os.Getenv("DISCORD_TOKEN")
 
 	if token == "" {
-		log.Fatal("DISCORD_TOKEN missing")
+
+		fmt.Println("DISCORD_TOKEN not found")
+
+		return
 	}
 
 	/*
-	   CREATE DISCORD SESSION
+	   DISCORD SESSION
 	*/
 
-	dg, err := discordgo.New("Bot " + token)
+	dg, err := discordgo.New(
+		"Bot " + token,
+	)
 
 	if err != nil {
-		log.Fatal(err)
+
+		fmt.Println(err)
+
+		return
 	}
 
 	/*
-	   ADD MESSAGE HANDLER
+	   MESSAGE HANDLER
 	*/
 
-	dg.AddHandler(messageCreate)
+	dg.AddHandler(func(
+		s *discordgo.Session,
+		m *discordgo.MessageCreate,
+	) {
+
+		/*
+		   IGNORE BOT
+		*/
+
+		if m.Author.Bot {
+			return
+		}
+
+		message :=
+			strings.TrimSpace(
+				m.Content,
+			)
+
+		if message == "" {
+			return
+		}
+
+		/*
+		   INTERNET SEARCH
+		*/
+
+		searchResult :=
+			internet.LiveSearch(message)
+
+		/*
+		   EMPTY RESULT
+		*/
+
+		if strings.TrimSpace(
+			searchResult,
+		) == "" {
+
+			searchResult =
+				"❌ Ничего не найдено."
+		}
+
+		/*
+		   SEND RESPONSE
+		*/
+
+		_, err := s.ChannelMessageSend(
+			m.ChannelID,
+			"🌐 Ответ:\n\n"+searchResult,
+		)
+
+		if err != nil {
+
+			fmt.Println(err)
+		}
+	})
 
 	/*
-	   BOT INTENTS
-	*/
-
-	dg.Identify.Intents =
-		discordgo.IntentsGuildMessages |
-			discordgo.IntentsDirectMessages |
-			discordgo.IntentsMessageContent
-
-	/*
-	   OPEN CONNECTION
+	   OPEN DISCORD
 	*/
 
 	err = dg.Open()
 
 	if err != nil {
-		log.Fatal(err)
+
+		fmt.Println(err)
+
+		return
 	}
 
-	log.Println("🚀 AI Builder Online")
+	fmt.Println(
+		"AI Builder Discord Bot Started",
+	)
+
+	/*
+	   OPTIONAL WEB SERVER
+	*/
+
+	http.HandleFunc("/", func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
+
+		fmt.Fprint(
+			w,
+			"AI Builder Running",
+		)
+	})
+
+	go func() {
+
+		log.Fatal(
+			http.ListenAndServe(
+				":8080",
+				nil,
+			),
+		)
+	}()
 
 	/*
 	   KEEP ALIVE
 	*/
 
 	select {}
-}
-
-func messageCreate(
-	s *discordgo.Session,
-	m *discordgo.MessageCreate,
-) {
-
-	/*
-	   IGNORE BOTS
-	*/
-
-	if m.Author.Bot {
-		return
-	}
-
-	/*
-	   CLEAN MESSAGE
-	*/
-
-	message := strings.TrimSpace(m.Content)
-
-	if message == "" {
-		return
-	}
-
-	/*
-	   DETECT INTENT
-	*/
-
-	intent := brain.DetectIntent(message)
-
-	/*
-	   WEBSITE GENERATION
-	*/
-
-	if intent == "website" {
-
-		project :=
-			generator.GenerateNextProject(message)
-
-		_, sendErr := s.ChannelMessageSend(
-			m.ChannelID,
-			"🚀 NEXT.JS PROJECT GENERATED\n\n"+project,
-		)
-
-		if sendErr != nil {
-			log.Println(sendErr)
-		}
-
-		return
-	}
-
-	/*
-	   REAL GOOGLE SEARCH
-	*/
-
-	searchResult :=
-	internet.LiveSearch(message)
-
-	/*
-	   SCRAPING / CLEANING
-	*/
-
-	cleanContent :=
-		internet.ScrapeContent(searchResult)
-
-	/*
-	   AI SUMMARY
-	*/
-
-	summary :=
-		summarizer.Summarize(cleanContent)
-
-	/*
-	   REASONING
-	*/
-
-	answer :=
-		brain.Think(
-			message,
-			summary,
-		)
-
-	/*
-	   FALLBACK
-	*/
-
-	if strings.TrimSpace(answer) == "" {
-
-		answer = `
-❌ Не удалось получить ответ.
-
-Попробуй:
-- уточнить запрос
-- написать конкретнее
-- использовать английский язык
-`
-	}
-
-	/*
-	   SEND MESSAGE
-	*/
-
-	_, sendErr := s.ChannelMessageSend(
-		m.ChannelID,
-		answer,
-	)
-
-	if sendErr != nil {
-		log.Println(sendErr)
-	}
 }
