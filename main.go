@@ -4,6 +4,7 @@ import (
 	"ai-builder/brain"
 	"ai-builder/generator"
 	"ai-builder/internet"
+	"ai-builder/summarizer"
 	"log"
 	"os"
 	"strings"
@@ -66,7 +67,8 @@ func messageCreate(
 
 	if intent == "website" {
 
-		project := generator.GenerateNextProject(message)
+		project :=
+			generator.GenerateNextProject(message)
 
 		s.ChannelMessageSend(
 			m.ChannelID,
@@ -77,23 +79,35 @@ func messageCreate(
 	}
 
 	/*
-	   INTERNET PIPELINE
+	   LIVE INTERNET SEARCH
 	*/
 
-	searchResult := internet.SearchWeb(message)
+	liveData :=
+		internet.LiveSearch(message)
 
-	scraped := internet.ScrapeContent(searchResult)
+	/*
+	   SCRAPING
+	*/
 
-	summary := internet.Summarize(scraped)
+	scraped :=
+		internet.ScrapeContent(liveData)
+
+	/*
+	   AI SUMMARY
+	*/
+
+	summary :=
+		summarizer.Summarize(scraped)
 
 	/*
 	   AI REASONING
 	*/
 
-	finalAnswer := brain.Think(
-		message,
-		summary,
-	)
+	answer :=
+		brain.Think(
+			message,
+			summary,
+		)
 
 	/*
 	   SEND
@@ -101,6 +115,6 @@ func messageCreate(
 
 	s.ChannelMessageSend(
 		m.ChannelID,
-		finalAnswer,
+		answer,
 	)
 }
