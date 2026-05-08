@@ -3,8 +3,8 @@ package main
 import (
 	"ai-builder/brain"
 	"ai-builder/internet"
+	"ai-builder/memory"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -14,22 +14,18 @@ import (
 
 func main() {
 
-	/*
-	   DISCORD TOKEN
-	*/
-
-	token := os.Getenv("DISCORD_TOKEN")
+	token := os.Getenv(
+		"DISCORD_TOKEN",
+	)
 
 	if token == "" {
 
-		fmt.Println("DISCORD_TOKEN not found")
+		fmt.Println(
+			"DISCORD_TOKEN missing",
+		)
 
 		return
 	}
-
-	/*
-	   CREATE DISCORD SESSION
-	*/
 
 	dg, err := discordgo.New(
 		"Bot " + token,
@@ -42,94 +38,75 @@ func main() {
 		return
 	}
 
-	/*
-	   MESSAGE HANDLER
-	*/
-
 	dg.AddHandler(func(
 		s *discordgo.Session,
 		m *discordgo.MessageCreate,
 	) {
 
 		/*
-		   IGNORE BOTS
+		   IGNORE BOT
 		*/
 
 		if m.Author.Bot {
 			return
 		}
 
-		/*
-		   CLEAN MESSAGE
-		*/
-
-		message :=
+		query :=
 			strings.TrimSpace(
 				m.Content,
 			)
 
-		if message == "" {
+		if query == "" {
 			return
 		}
 
 		/*
-		   REAL INTERNET SEARCH
+		   SAVE MEMORY
 		*/
 
-		searchResult :=
-			internet.LiveSearch(
-				message,
+		memory.Save(query)
+
+		/*
+		   SEARCH
+		*/
+
+		search :=
+			internet.LiveSearch(query)
+
+		/*
+		   SCRAPE
+		*/
+
+		scraped :=
+			internet.ScrapePage(
+				"https://duckduckgo.com",
 			)
 
 		/*
-		   EMPTY RESULT
+		   REASONING
 		*/
 
-		if strings.TrimSpace(
-			searchResult,
-		) == "" {
-
-			searchResult =
-				"❌ Информация не найдена."
-		}
-
-		/*
-		   FORMAT AI ANSWER
-		*/
-
-		finalAnswer :=
-			brain.FormatAnswer(
-				message,
-				searchResult,
+		answer :=
+			brain.Reason(
+				query,
+				search,
+				scraped,
 			)
 
 		/*
-		   SEND MESSAGE
+		   SEND
 		*/
 
-		_, err := s.ChannelMessageSend(
+		s.ChannelMessageSend(
 			m.ChannelID,
-			finalAnswer,
+			answer,
 		)
-
-		if err != nil {
-
-			fmt.Println(err)
-		}
 	})
-
-	/*
-	   DISCORD INTENTS
-	*/
 
 	dg.Identify.Intents =
 		discordgo.IntentsGuildMessages |
 			discordgo.IntentsDirectMessages |
 			discordgo.IntentsMessageContent
-
-	/*
-	   OPEN CONNECTION
-	*/
 
 	err = dg.Open()
 
@@ -144,10 +121,6 @@ func main() {
 		"🚀 AI Builder Online",
 	)
 
-	/*
-	   OPTIONAL WEB SERVER
-	*/
-
 	http.HandleFunc("/", func(
 		w http.ResponseWriter,
 		r *http.Request,
@@ -159,19 +132,8 @@ func main() {
 		)
 	})
 
-	go func() {
-
-		log.Fatal(
-			http.ListenAndServe(
-				":8080",
-				nil,
-			),
-		)
-	}()
-
-	/*
-	   KEEP ALIVE
-	*/
-
-	select {}
+	http.ListenAndServe(
+		":8080",
+		nil,
+	)
 }
