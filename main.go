@@ -7,8 +7,10 @@ import (
 	"ai-builder/parser"
 	"ai-builder/storage"
 
+	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -17,9 +19,16 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+type SiteData struct {
+	ID   string `json:"id"`
+	HTML string `json:"html"`
+}
+
 var sites = map[string]string{}
 
 func main() {
+
+	rand.Seed(time.Now().UnixNano())
 
 	token := os.Getenv("DISCORD_TOKEN")
 
@@ -27,145 +36,54 @@ func main() {
 		log.Fatal("DISCORD_TOKEN missing")
 	}
 
-	dg, err := discordgo.New("Bot " + token)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	dg.Identify.Intents =
-		discordgo.IntentsGuildMessages |
-			discordgo.IntentsMessageContent
-
-	dg.AddHandler(messageCreate)
-
-	err = dg.Open()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Bot online")
-
-	http.HandleFunc("/site/", serveSite)
-
 	port := os.Getenv("PORT")
 
 	if port == "" {
 		port = "8080"
 	}
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
-}
+	dg, err := discordgo.New(
+		"Bot " + token,
+	)
 
-func messageCreate(
-	s *discordgo.Session,
-	m *discordgo.MessageCreate,
-) {
-
-	if m.Author.Bot {
-		return
-	}
-
-	content := strings.TrimSpace(m.Content)
-
-	// WEBSITE REQUEST
-	if parser.IsWebsiteRequest(content) {
-
-		go handleWebsiteRequest(s, m, content)
-
-		return
-	}
-
-	// NORMAL CHAT
-	go handleChatRequest(s, m, content)
-}
-
-func handleChatRequest(
-	s *discordgo.Session,
-	m *discordgo.MessageCreate,
-	query string,
-) {
-
-	html, err := internet.SearchInternet(query)
 	if err != nil {
-
-		s.ChannelMessageSend(
-			m.ChannelID,
-			"Ошибка поиска в интернете.",
-		)
-
-		return
+		log.Fatal(err)
 	}
 
-	results := internet.ExtractTitles(html)
+	dg.AddHandler(messageCreate)
 
-	response := parser.BuildChatResponse(
-		query,
-		results,
-	)
+	dg.Identify.Intents =
+		discordgo.IntentsGuildMessages |
+			discordgo.IntentsMessageContent
 
-	s.ChannelMessageSend(
-		m.ChannelID,
-		response,
+	err = dg.Open()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Bot online")
+
+	http.HandleFunc("/", homeHandler)
+
+	http.HandleFunc("/site/", siteHandler)
+
+	log.Fatal(
+		http.ListenAndServe(":"+port, nil),
 	)
 }
 
-func handleWebsiteRequest(
-	s *discordgo.Session,
-	m *discordgo.MessageCreate,
-	query string,
+func homeHandler(
+	w http.ResponseWriter,
+	r *http.Request,
 ) {
 
-	s.ChannelMessageSend(
-		m.ChannelID,
-		"🌐 Анализирую интернет и создаю сайт...",
-	)
-
-	// INTERNET SEARCH
-	searchHTML, _ := internet.SearchInternet(query)
-
-	// ANALYSIS
-	style := analysis.DetectStyle(searchHTML)
-
-	_ = style
-
-	// GENERATE SITE
-	siteHTML := engine.GenerateWebsite(query)
-
-	// SITE ID
-	siteID := fmt.Sprintf(
-		"%d",
-		time.Now().UnixNano(),
-	)
-
-	sites[siteID] = siteHTML
-
-	// SAVE
-	storage.SaveSite(storage.Site{
-		ID:    siteID,
-		HTML:  siteHTML,
-		Title: query,
-	})
-
-	// DOMAIN
-	domain := os.Getenv("DOMAIN")
-
-	if domain == "" {
-		domain = "http://localhost:8080"
-	}
-
-	link := fmt.Sprintf(
-		"%s/site/%s",
-		domain,
-		siteID,
-	)
-
-	s.ChannelMessageSend(
-		m.ChannelID,
-		"✅ Сайт создан:\n"+link,
-	)
+	w.Write([]byte(`
+	<h1>AI Builder Online</h1>
+	`))
 }
 
-func serveSite(
+func siteHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -179,7 +97,9 @@ func serveSite(
 
 	if !ok {
 
-		http.NotFound(w, r)
+		w.WriteHeader(404)
+
+		w.Write([]byte("site not found"))
 
 		return
 	}
@@ -189,5 +109,176 @@ func serveSite(
 		"text/html",
 	)
 
-	fmt.Fprint(w, html)
+	w.Write([]byte(html))
+}
+
+func messageCreate(
+	s *discordgo.Session,
+	m *discordgo.MessageCreate,
+) {
+
+	if m.Author.Bot {
+		return
+	}
+
+	query := strings.TrimSpace(
+		m.Content,
+	)
+
+	if query == "" {
+		return
+	}
+
+	intent := analysis.DetectIntent(query)
+
+	/*
+	   WEBSITE GENERATION
+	*/
+
+	if parser.IsWebsiteRequest(query) ||
+		intent == "website" {
+
+		html := engine.GenerateWebsite(query)
+
+		id := generateID()
+
+		sites[id] = html
+
+		storage.SaveSite(
+			storage.Site{
+				ID:   id,
+				HTML: html,
+			},
+		)
+
+		domain := os.Getenv("DOMAIN")
+
+		url :=
+			domain +
+				"/site/" +
+				id
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "🚀 Website Generated",
+			Description: query,
+			Color:       0x5865F2,
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:   "Live Preview",
+					Value:  url,
+					Inline: false,
+				},
+			},
+		}
+
+		s.ChannelMessageSendEmbed(
+			m.ChannelID,
+			embed,
+		)
+
+		return
+	}
+
+	/*
+	   INTERNET SEARCH
+	*/
+
+	html, err := internet.SearchInternet(
+		query,
+	)
+
+	if err != nil {
+
+		s.ChannelMessageSend(
+			m.ChannelID,
+			"Internet search failed.",
+		)
+
+		return
+	}
+
+	results :=
+		internet.ExtractTitles(html)
+
+	results =
+		analysis.RankResults(results)
+
+	answer :=
+		internet.BuildAnswer(
+			query,
+			results,
+		)
+
+	answer =
+		parser.CleanResponse(answer)
+
+	s.ChannelMessageSend(
+		m.ChannelID,
+		answer,
+	)
+}
+
+func generateID() string {
+
+	const chars =
+		"abcdefghijklmnopqrstuvwxyz0123456789"
+
+	result := make([]byte, 12)
+
+	for i := range result {
+
+		result[i] =
+			chars[rand.Intn(len(chars))]
+	}
+
+	return string(result)
+}
+
+func saveSitesFile() {
+
+	var all []SiteData
+
+	for id, html := range sites {
+
+		all = append(
+			all,
+			SiteData{
+				ID:   id,
+				HTML: html,
+			},
+		)
+	}
+
+	data, _ := json.MarshalIndent(
+		all,
+		"",
+		"  ",
+	)
+
+	os.WriteFile(
+		"data/sites.json",
+		data,
+		0644,
+	)
+}
+
+func init() {
+
+	os.MkdirAll("data", 0755)
+
+	file, err := os.ReadFile(
+		"data/sites.json",
+	)
+
+	if err != nil {
+		return
+	}
+
+	var all []SiteData
+
+	json.Unmarshal(file, &all)
+
+	for _, s := range all {
+		sites[s.ID] = s.HTML
+	}
 }
