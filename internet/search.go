@@ -7,28 +7,33 @@ import (
 )
 
 func SearchInternet(query string) (string, error) {
-	searchURL := "https://html.duckduckgo.com/html/?q=" + url.QueryEscape(query)
 
-	req, err := http.NewRequest("GET", searchURL, nil)
-	if err != nil {
-		return "", err
-	}
+	search :=
+		"https://html.duckduckgo.com/html/?q=" +
+			url.QueryEscape(query)
 
-	req.Header.Set("User-Agent", "Mozilla/5.0")
+	req, _ := http.NewRequest(
+		"GET",
+		search,
+		nil,
+	)
+
+	req.Header.Set(
+		"User-Agent",
+		"Mozilla/5.0",
+	)
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
+
 	if err != nil {
 		return "", err
 	}
 
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
+	body, _ := io.ReadAll(resp.Body)
 
 	return string(body), nil
 }
