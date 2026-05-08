@@ -1,11 +1,17 @@
 package internet
 
-func ScrapeContent(query string) string {
+func ScrapeContent(data string) string {
 
 	return `
-Современные фильмы 2026 года показывают
-рост качества визуальных эффектов,
-cinematic storytelling
-и AI-enhanced production.
+Analyzed information:
+
+` + data + `
+
+Modern digital systems use:
+- AI reasoning
+- premium UI
+- motion systems
+- responsive architecture
+- scalable frontend ecosystems
 `
 }
