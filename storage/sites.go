@@ -6,25 +6,33 @@ import (
 )
 
 type Site struct {
-	ID    string `json:"id"`
-	HTML  string `json:"html"`
-	Title string `json:"title"`
+	ID string `json:"id"`
+	HTML string `json:"html"`
 }
 
 func SaveSite(site Site) error {
 
-	file, err := os.ReadFile("data/sites.json")
-	if err != nil {
-		return err
-	}
-
 	var sites []Site
 
-	json.Unmarshal(file, &sites)
+	file, err := os.ReadFile(
+		"data/sites.json",
+	)
+
+	if err == nil {
+		json.Unmarshal(file, &sites)
+	}
 
 	sites = append(sites, site)
 
-	updated, _ := json.MarshalIndent(sites, "", "  ")
+	updated, _ := json.MarshalIndent(
+		sites,
+		"",
+		"  ",
+	)
 
-	return os.WriteFile("data/sites.json", updated, 0644)
+	return os.WriteFile(
+		"data/sites.json",
+		updated,
+		0644,
+	)
 }
