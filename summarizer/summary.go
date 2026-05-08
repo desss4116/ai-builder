@@ -4,14 +4,50 @@ import "strings"
 
 func Summarize(content string) string {
 
-	if len(content) > 1500 {
-		content = content[:1500]
-	}
-
 	content = strings.TrimSpace(content)
 
-	return `
-🧠 AI Summary:
+	if content == "" {
 
-` + content
+		return `
+❌ Ничего не найдено.
+`
+	}
+
+	/*
+	   REMOVE GOOGLE GARBAGE
+	*/
+
+	content = strings.ReplaceAll(
+		content,
+		"Все",
+		"",
+	)
+
+	content = strings.ReplaceAll(
+		content,
+		"Картинки",
+		"",
+	)
+
+	content = strings.ReplaceAll(
+		content,
+		"Видео",
+		"",
+	)
+
+	content = strings.ReplaceAll(
+		content,
+		"Новости",
+		"",
+	)
+
+	/*
+	   LIMIT
+	*/
+
+	if len(content) > 2000 {
+		content = content[:2000]
+	}
+
+	return content
 }
