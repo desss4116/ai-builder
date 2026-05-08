@@ -1,5 +1,8 @@
 package export
 
 func ExportProject() string {
-	return "project exported"
+
+	return `
+ZIP export system ready.
+`
 }
