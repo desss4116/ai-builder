@@ -37,7 +37,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println("AI Builder Online")
+	log.Println("🚀 AI Builder Online")
 
 	select {}
 }
@@ -47,6 +47,7 @@ func messageCreate(
 	m *discordgo.MessageCreate,
 ) {
 
+	// Ignore bots
 	if m.Author.Bot {
 		return
 	}
@@ -57,11 +58,13 @@ func messageCreate(
 		return
 	}
 
+	// Thinking message
 	s.ChannelMessageSend(
 		m.ChannelID,
 		"🧠 Анализирую запрос...",
 	)
 
+	// Search
 	results := internet.Search(query)
 
 	if len(results) == 0 {
@@ -74,6 +77,7 @@ func messageCreate(
 		return
 	}
 
+	// Multi-source extraction
 	var combined string
 
 	maxSources := 3
@@ -101,6 +105,7 @@ func messageCreate(
 		combined += clean + "\n\n"
 	}
 
+	// No extracted content
 	if combined == "" {
 
 		s.ChannelMessageSend(
@@ -111,14 +116,17 @@ func messageCreate(
 		return
 	}
 
+	// Build AI answer
 	answer := summarizer.BuildAnswer(combined)
 
+	// Discord limit
 	if len(answer) > 1900 {
 		answer = answer[:1900]
 	}
 
+	// Send answer
 	s.ChannelMessageSend(
-		s.ChannelID,
+		m.ChannelID,
 		answer,
 	)
 }
