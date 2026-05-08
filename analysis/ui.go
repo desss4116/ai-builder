@@ -2,23 +2,20 @@ package analysis
 
 import "strings"
 
-func DetectUIStyle(html string) string {
-	html = strings.ToLower(html)
+func DetectStyle(prompt string) string {
 
-	if strings.Contains(html, "luxury") {
+	prompt = strings.ToLower(prompt)
+
+	if strings.Contains(prompt, "luxury") {
 		return "luxury"
 	}
 
-	if strings.Contains(html, "minimal") {
+	if strings.Contains(prompt, "nike") {
+		return "sport"
+	}
+
+	if strings.Contains(prompt, "apple") {
 		return "minimal"
-	}
-
-	if strings.Contains(html, "cyber") {
-		return "cyberpunk"
-	}
-
-	if strings.Contains(html, "startup") {
-		return "startup"
 	}
 
 	return "modern"
