@@ -17,15 +17,17 @@ func DetectIntent(query string) string {
 
 func Think(query string, data string) string {
 
-	if data != "" {
+	data = strings.TrimSpace(data)
+
+	if data == "" {
 
 		return `
-🌐 Ответ:
-
-` + data
+❌ Информация не найдена.
+`
 	}
 
 	return `
-❌ Информация пока не найдена.
-`
+🌐 Ответ:
+
+` + data
 }
