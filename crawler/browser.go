@@ -1,24 +1,45 @@
 package crawler
 
 import (
-	"context"
-
-	"github.com/chromedp/chromedp"
+	"io"
+	"net/http"
+	"time"
 )
 
-func RenderPage(url string) string {
+func Open(url string) string {
 
-	ctx, cancel := chromedp.NewContext(context.Background())
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+	}
 
-	defer cancel()
-
-	var html string
-
-	chromedp.Run(
-		ctx,
-		chromedp.Navigate(url),
-		chromedp.OuterHTML("html", &html),
+	req, err := http.NewRequest(
+		"GET",
+		url,
+		nil,
 	)
 
-	return html
+	if err != nil {
+		return ""
+	}
+
+	req.Header.Set(
+		"User-Agent",
+		"Mozilla/5.0",
+	)
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return ""
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return ""
+	}
+
+	return string(body)
 }
