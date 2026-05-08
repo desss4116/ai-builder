@@ -1,33 +1,25 @@
 package brain
 
-import "strings"
+import (
+	"strings"
+)
 
-func DetectIntent(query string) string {
+func Reason(
+	query string,
+	search string,
+	scraped string,
+) string {
 
-	q := strings.ToLower(query)
+	text :=
+		search + "\n" + scraped
 
-	if strings.Contains(q, "создай") &&
-		strings.Contains(q, "сайт") {
+	text =
+		SemanticCleanup(text)
 
-		return "website"
+	if strings.TrimSpace(text) == "" {
+
+		return "❌ Информация не найдена."
 	}
 
-	return "general"
-}
-
-func Think(query string, data string) string {
-
-	data = strings.TrimSpace(data)
-
-	if data == "" {
-
-		return `
-❌ Информация не найдена.
-`
-	}
-
-	return `
-🌐 Ответ:
-
-` + data
+	return "🌐 Ответ:\n\n" + text
 }
