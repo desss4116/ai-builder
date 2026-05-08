@@ -16,7 +16,7 @@ func main() {
 	token := os.Getenv("DISCORD_TOKEN")
 
 	if token == "" {
-		log.Fatal("DISCORD_TOKEN not found")
+		log.Fatal("DISCORD_TOKEN missing")
 	}
 
 	dg, err := discordgo.New("Bot " + token)
@@ -27,9 +27,10 @@ func main() {
 
 	dg.AddHandler(messageCreate)
 
-	dg.Identify.Intents = discordgo.IntentsGuildMessages |
-		discordgo.IntentsDirectMessages |
-		discordgo.IntentsMessageContent
+	dg.Identify.Intents =
+		discordgo.IntentsGuildMessages |
+			discordgo.IntentsDirectMessages |
+			discordgo.IntentsMessageContent
 
 	err = dg.Open()
 
@@ -37,7 +38,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println("🚀 AI Builder System Online")
+	log.Println("🚀 AI Builder Online")
 
 	select {}
 }
@@ -60,7 +61,7 @@ func messageCreate(
 	intent := brain.DetectIntent(message)
 
 	/*
-	   WEBSITE MODE
+	   WEBSITE GENERATION
 	*/
 
 	if intent == "website" {
@@ -69,37 +70,37 @@ func messageCreate(
 
 		s.ChannelMessageSend(
 			m.ChannelID,
-			"🚀 NEXT.JS PROJECT GENERATED\n\n"+project,
+			"🚀 NEXT.JS APP GENERATED\n\n"+project,
 		)
 
 		return
 	}
 
 	/*
-	   INTERNET SEARCH
+	   INTERNET PIPELINE
 	*/
 
-	result := internet.SearchWeb(message)
+	searchResult := internet.SearchWeb(message)
+
+	scraped := internet.ScrapeContent(searchResult)
+
+	summary := internet.Summarize(scraped)
 
 	/*
-	   AI ANSWER ENGINE
+	   AI REASONING
 	*/
 
-	finalAnswer := brain.GenerateAnswer(
+	finalAnswer := brain.Think(
 		message,
-		result,
+		summary,
 	)
 
 	/*
-	   SEND RESPONSE
+	   SEND
 	*/
 
-	_, err := s.ChannelMessageSend(
+	s.ChannelMessageSend(
 		m.ChannelID,
 		finalAnswer,
 	)
-
-	if err != nil {
-		log.Println(err)
-	}
 }
