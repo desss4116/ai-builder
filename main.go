@@ -14,11 +14,19 @@ import (
 
 func main() {
 
+	/*
+	   DISCORD TOKEN
+	*/
+
 	token := os.Getenv("DISCORD_TOKEN")
 
 	if token == "" {
 		log.Fatal("DISCORD_TOKEN missing")
 	}
+
+	/*
+	   CREATE DISCORD SESSION
+	*/
 
 	dg, err := discordgo.New("Bot " + token)
 
@@ -26,12 +34,24 @@ func main() {
 		log.Fatal(err)
 	}
 
+	/*
+	   ADD MESSAGE HANDLER
+	*/
+
 	dg.AddHandler(messageCreate)
+
+	/*
+	   BOT INTENTS
+	*/
 
 	dg.Identify.Intents =
 		discordgo.IntentsGuildMessages |
 			discordgo.IntentsDirectMessages |
 			discordgo.IntentsMessageContent
+
+	/*
+	   OPEN CONNECTION
+	*/
 
 	err = dg.Open()
 
@@ -40,6 +60,10 @@ func main() {
 	}
 
 	log.Println("🚀 AI Builder Online")
+
+	/*
+	   KEEP ALIVE
+	*/
 
 	select {}
 }
@@ -82,10 +106,14 @@ func messageCreate(
 		project :=
 			generator.GenerateNextProject(message)
 
-		s.ChannelMessageSend(
+		_, sendErr := s.ChannelMessageSend(
 			m.ChannelID,
 			"🚀 NEXT.JS PROJECT GENERATED\n\n"+project,
 		)
+
+		if sendErr != nil {
+			log.Println(sendErr)
+		}
 
 		return
 	}
@@ -141,12 +169,12 @@ func messageCreate(
 	   SEND MESSAGE
 	*/
 
-	_, err = s.ChannelMessageSend(
+	_, sendErr := s.ChannelMessageSend(
 		m.ChannelID,
 		answer,
 	)
 
-	if err != nil {
-		log.Println(err)
+	if sendErr != nil {
+		log.Println(sendErr)
 	}
 }
