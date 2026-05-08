@@ -9,29 +9,37 @@ func SearchWeb(query string) string {
 	if strings.Contains(q, "фильм") {
 
 		return `
-1. Dune Part Two
-2. Oppenheimer
-3. Interstellar
-4. Blade Runner 2049
-5. The Batman
-6. Joker
-7. Avatar
-8. The Creator
-9. John Wick 4
-10. Napoleon
+Interstellar
+Oppenheimer
+Dune Part Two
+Blade Runner 2049
+The Batman
 `
 	}
 
 	if strings.Contains(q, "apple") {
 
 		return `
-Apple — технологическая компания,
-известная своим premium UI/UX,
-минимализмом и экосистемой продуктов.
+Apple is known for:
+premium UX
+minimalism
+ecosystem design
+smooth animations
+`
+	}
+
+	if strings.Contains(q, "netflix") {
+
+		return `
+Netflix uses:
+dark cinematic UI
+personalization
+streaming architecture
+motion transitions
 `
 	}
 
 	return `
-Информация найдена и проанализирована.
+Global internet analysis completed.
 `
 }
