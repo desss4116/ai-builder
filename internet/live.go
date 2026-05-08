@@ -1,64 +1,41 @@
 package internet
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
-type DuckTopic struct {
-	Text   string      `json:"Text"`
-	Topics []DuckTopic `json:"Topics"`
-}
-
-type DuckResponse struct {
-	AbstractText string      `json:"AbstractText"`
-	Related      []DuckTopic `json:"RelatedTopics"`
-}
-
-func extractTopics(
-	topics []DuckTopic,
-	output *[]string,
-) {
-
-	for _, topic := range topics {
-
-		/*
-		   DIRECT TEXT
-		*/
-
-		if strings.TrimSpace(topic.Text) != "" {
-
-			*output = append(
-				*output,
-				"• "+topic.Text,
-			)
-		}
-
-		/*
-		   NESTED TOPICS
-		*/
-
-		if len(topic.Topics) > 0 {
-
-			extractTopics(
-				topic.Topics,
-				output,
-			)
-		}
-	}
-}
-
 func LiveSearch(query string) string {
 
-	endpoint :=
-		"https://api.duckduckgo.com/?q=" +
-			url.QueryEscape(query) +
-			"&format=json&pretty=1"
+	searchURL :=
+		"https://html.duckduckgo.com/html/?q=" +
+			url.QueryEscape(query)
 
-	resp, err := http.Get(endpoint)
+	req, err := http.NewRequest(
+		"GET",
+		searchURL,
+		nil,
+	)
+
+	if err != nil {
+		return ""
+	}
+
+	/*
+	   USER AGENT
+	*/
+
+	req.Header.Set(
+		"User-Agent",
+		"Mozilla/5.0",
+	)
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
 
 	if err != nil {
 		return ""
@@ -72,47 +49,47 @@ func LiveSearch(query string) string {
 		return ""
 	}
 
-	var result DuckResponse
+	html := string(body)
 
-	err = json.Unmarshal(body, &result)
+	/*
+	   EXTRACT SEARCH RESULTS
+	*/
 
-	if err != nil {
+	re := regexp.MustCompile(
+		`(?s)<a[^>]*class="result__a"[^>]*>(.*?)</a>`,
+	)
+
+	matches := re.FindAllStringSubmatch(
+		html,
+		10,
+	)
+
+	if len(matches) == 0 {
 		return ""
 	}
 
-	/*
-	   ABSTRACT
-	*/
+	output := ""
 
-	if strings.TrimSpace(
-		result.AbstractText,
-	) != "" {
+	for _, match := range matches {
 
-		return result.AbstractText
-	}
+		text := match[1]
 
-	/*
-	   RELATED TOPICS
-	*/
+		/*
+		   REMOVE HTML
+		*/
 
-	var outputs []string
+		text = regexp.MustCompile(
+			`<[^>]*>`,
+		).ReplaceAllString(text, "")
 
-	extractTopics(
-		result.Related,
-		&outputs,
-	)
+		text = strings.TrimSpace(text)
 
-	if len(outputs) > 0 {
-
-		if len(outputs) > 5 {
-			outputs = outputs[:5]
+		if text == "" {
+			continue
 		}
 
-		return strings.Join(
-			outputs,
-			"\n\n",
-		)
+		output += "• " + text + "\n\n"
 	}
 
-	return ""
+	return strings.TrimSpace(output)
 }
