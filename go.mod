@@ -1,9 +1,5 @@
 module ai-builder
 
-go 1.21
+go 1.22
 
-require (
-	://github.com v0.27.1
-	://github.com v1.14.17
-)
-
+require github.com/bwmarrin/discordgo v0.28.1
