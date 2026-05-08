@@ -2,20 +2,25 @@ package parser
 
 import "strings"
 
-func IsWebsiteRequest(msg string) bool {
-	msg = strings.ToLower(msg)
+func IsWebsiteRequest(text string) bool {
+
+	text = strings.ToLower(text)
 
 	keywords := []string{
 		"создай",
-		"site",
+		"сделай",
 		"website",
+		"site",
 		"landing",
 		"лендинг",
+		"магазин",
 		"сайт",
+		"portfolio",
+		"startup",
 	}
 
 	for _, k := range keywords {
-		if strings.Contains(msg, k) {
+		if strings.Contains(text, k) {
 			return true
 		}
 	}
