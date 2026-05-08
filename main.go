@@ -1,11 +1,9 @@
 package main
 
 import (
-	"ai-builder/brain"
 	"ai-builder/internet"
-	"ai-builder/memory"
-	"fmt"
-	"net/http"
+	"ai-builder/summarizer"
+	"log"
 	"os"
 	"strings"
 
@@ -14,126 +12,113 @@ import (
 
 func main() {
 
-	token := os.Getenv(
-		"DISCORD_TOKEN",
-	)
+	token := os.Getenv("DISCORD_TOKEN")
 
 	if token == "" {
-
-		fmt.Println(
-			"DISCORD_TOKEN missing",
-		)
-
-		return
+		log.Fatal("DISCORD_TOKEN not found")
 	}
 
-	dg, err := discordgo.New(
-		"Bot " + token,
-	)
+	session, err := discordgo.New("Bot " + token)
 
 	if err != nil {
-
-		fmt.Println(err)
-
-		return
+		log.Fatal(err)
 	}
 
-	dg.AddHandler(func(
-		s *discordgo.Session,
-		m *discordgo.MessageCreate,
-	) {
+	session.AddHandler(messageCreate)
 
-		/*
-		   IGNORE BOT
-		*/
-
-		if m.Author.Bot {
-			return
-		}
-
-		query :=
-			strings.TrimSpace(
-				m.Content,
-			)
-
-		if query == "" {
-			return
-		}
-
-		/*
-		   SAVE MEMORY
-		*/
-
-		memory.Save(query)
-
-		/*
-		   SEARCH
-		*/
-
-		search :=
-			internet.LiveSearch(query)
-
-		/*
-		   SCRAPE
-		*/
-
-		scraped :=
-			internet.ScrapePage(
-				"https://duckduckgo.com",
-			)
-
-		/*
-		   REASONING
-		*/
-
-		answer :=
-			brain.Reason(
-				query,
-				search,
-				scraped,
-			)
-
-		/*
-		   SEND
-		*/
-
-		s.ChannelMessageSend(
-			m.ChannelID,
-			answer,
-		)
-	})
-
-	dg.Identify.Intents =
+	session.Identify.Intents =
 		discordgo.IntentsGuildMessages |
 			discordgo.IntentsDirectMessages |
 			discordgo.IntentsMessageContent
 
-	err = dg.Open()
+	err = session.Open()
 
 	if err != nil {
+		log.Fatal(err)
+	}
 
-		fmt.Println(err)
+	log.Println("AI Builder Online")
+
+	select {}
+}
+
+func messageCreate(
+	s *discordgo.Session,
+	m *discordgo.MessageCreate,
+) {
+
+	if m.Author.Bot {
+		return
+	}
+
+	query := strings.TrimSpace(m.Content)
+
+	if query == "" {
+		return
+	}
+
+	s.ChannelMessageSend(
+		m.ChannelID,
+		"🧠 Анализирую запрос...",
+	)
+
+	results := internet.Search(query)
+
+	if len(results) == 0 {
+
+		s.ChannelMessageSend(
+			m.ChannelID,
+			"❌ Ничего не найдено.",
+		)
 
 		return
 	}
 
-	fmt.Println(
-		"🚀 AI Builder Online",
-	)
+	var combined string
 
-	http.HandleFunc("/", func(
-		w http.ResponseWriter,
-		r *http.Request,
-	) {
+	maxSources := 3
 
-		fmt.Fprint(
-			w,
-			"AI Builder Running",
+	if len(results) < maxSources {
+		maxSources = len(results)
+	}
+
+	for i := 0; i < maxSources; i++ {
+
+		url := results[i].URL
+
+		html := internet.FetchPage(url)
+
+		if html == "" {
+			continue
+		}
+
+		clean := internet.ExtractCleanText(html)
+
+		if clean == "" {
+			continue
+		}
+
+		combined += clean + "\n\n"
+	}
+
+	if combined == "" {
+
+		s.ChannelMessageSend(
+			m.ChannelID,
+			"❌ Не удалось извлечь информацию.",
 		)
-	})
 
-	http.ListenAndServe(
-		":8080",
-		nil,
+		return
+	}
+
+	answer := summarizer.BuildAnswer(combined)
+
+	if len(answer) > 1900 {
+		answer = answer[:1900]
+	}
+
+	s.ChannelMessageSend(
+		s.ChannelID,
+		answer,
 	)
 }
