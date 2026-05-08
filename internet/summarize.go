@@ -3,11 +3,14 @@ package internet
 func Summarize(content string) string {
 
 	return `
-На основе анализа информации:
+Summary:
 
-Главные выводы:
-- качество фильмов выросло
-- cinematic experience стал важнее
-- premium storytelling доминирует
+` + content + `
+
+Key insights:
+- modern UI is minimal
+- UX must feel premium
+- motion improves engagement
+- performance is critical
 `
 }
