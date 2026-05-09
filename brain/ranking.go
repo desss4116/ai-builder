@@ -33,44 +33,17 @@ func RankTexts(
 		for _, q := range queryWords {
 
 			if strings.Contains(lower, q) {
-				score += 10
+				score += 15
 			}
 		}
 
-		// bad garbage
-
-		bad := []string{
-			"youtube",
-			"rutube",
-			"tiktok",
-			"playlist",
-			"lyrics",
-			"sign up",
-			"login",
-			"cookie",
-			"watch online",
-			"music",
-			"song",
-			"трек",
-			"слушать",
-		}
-
-		for _, b := range bad {
-
-			if strings.Contains(lower, b) {
-				score -= 20
-			}
-		}
-
-		// good knowledge signals
+		// knowledge quality
 
 		good := []string{
 			"это",
 			"является",
-			"представляет",
-			"профессия",
 			"фильм",
-			"персонаж",
+			"игра",
 			"супергерой",
 			"история",
 			"родился",
@@ -81,7 +54,29 @@ func RankTexts(
 		for _, g := range good {
 
 			if strings.Contains(lower, g) {
-				score += 15
+				score += 10
+			}
+		}
+
+		// garbage
+
+		bad := []string{
+			"youtube",
+			"rutube",
+			"tiktok",
+			"playlist",
+			"cookie",
+			"privacy",
+			"blocked",
+			"sign up",
+			"reddit",
+			"jump to content",
+		}
+
+		for _, b := range bad {
+
+			if strings.Contains(lower, b) {
+				score -= 30
 			}
 		}
 
