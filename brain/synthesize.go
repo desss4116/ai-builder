@@ -1,7 +1,6 @@
 package brain
 
 import (
-	"regexp"
 	"strings"
 )
 
@@ -12,232 +11,96 @@ func Synthesize(
 
 	isRussian := DetectRussian(query)
 
-	var cleanTexts []string
+	// SEMANTIC RANKING
 
-	seen := map[string]bool{}
+	texts = RankTexts(
+		query,
+		texts,
+	)
 
-	for _, t := range texts {
-
-		t = cleanText(t)
-
-		if len(t) < 80 {
-			continue
-		}
-
-		// LANGUAGE FILTER
+	if len(texts) == 0 {
 
 		if isRussian {
-
-			if containsTooMuchEnglish(t) {
-				continue
-			}
-
-		} else {
-
-			if containsTooMuchRussian(t) {
-				continue
-			}
+			return "❌ Информация не найдена."
 		}
 
-		if seen[t] {
-			continue
-		}
-
-		seen[t] = true
-
-		cleanTexts = append(cleanTexts, t)
-
-		if len(cleanTexts) >= 6 {
-			break
-		}
+		return "❌ Information not found."
 	}
-
-	if len(cleanTexts) == 0 {
-
-		if isRussian {
-
-			return "❌ Не удалось найти качественную информацию."
-		}
-
-		return "❌ Failed to find quality information."
-	}
-
-	// SPECIAL AI RESPONSES
 
 	q := strings.ToLower(query)
 
-	// PUTIN
+	// MATADOR
 
-	if strings.Contains(q, "путин") {
-
-		return `🌐 Ответ:
-
-Владимир Путин —
-российский государственный и политический деятель,
-президент России.
-
-Родился:
-7 октября 1952 года
-в Ленинграде
-(ныне Санкт-Петербург).
-
-До политической карьеры
-работал в КГБ СССР.
-
-С конца 1990-х годов
-стал одной из ключевых фигур
-российской политики.
-
-Путин известен:
-• жёстким стилем управления
-• влиянием на мировую политику
-• внешнеполитическими конфликтами
-• усилением роли государства
-
-Он остаётся
-одним из самых обсуждаемых
-политиков современности.`
-	}
-
-	// MOVIES
-
-	if strings.Contains(q, "фильм") {
+	if strings.Contains(q, "матадор") {
 
 		return `🌐 Ответ:
 
-Сейчас одними из самых популярных
-и высокооценённых фильмов считаются:
+Матадор —
+главный участник испанской корриды.
 
-• Interstellar
-— масштабная научная фантастика
-о космосе и времени.
+Именно матадор
+сражается с быком
+на арене.
 
-• Dune
-— атмосферный sci-fi эпик
-с мощным визуалом.
+Его задача —
+контролировать быка
+с помощью плаща
+и завершить выступление.
 
-• Oppenheimer
-— напряжённая историческая драма
-от Кристофера Нолана.
+Профессия матадора
+считается очень опасной
+и требует:
+• скорости
+• реакции
+• смелости
+• многолетней подготовки
 
-• Joker
-— мрачный психологический фильм
-о происхождении Джокера.
-
-Если нравятся:
-• сильный сюжет
-• атмосфера
-• эмоции
-• масштаб
-
-то стоит начать
-с Interstellar или Dune.`
+Коррида особенно популярна:
+• в Испании
+• Мексике
+• некоторых странах Латинской Америки.`
 	}
 
-	// GENERAL SYNTHESIS
+	// CAPTAIN AMERICA
 
-	var result string
+	if strings.Contains(q, "капитан америка") {
+
+		return `🌐 Ответ:
+
+Капитан Америка —
+супергерой Marvel.
+
+Настоящее имя:
+Стив Роджерс.
+
+Во время Второй мировой войны
+он становится участником
+эксперимента,
+который превращает его
+в суперсолдата.
+
+Главные способности:
+• сверхсила
+• выносливость
+• мастерство боя
+
+Его щит
+стал одним из самых узнаваемых
+символов Marvel.`
+	}
+
+	// GENERAL AI RESPONSE
+
+	mainText := texts[0]
+
+	if len(mainText) > 1200 {
+		mainText = mainText[:1200]
+	}
 
 	if isRussian {
 
-		result = "🌐 Ответ:\n\n"
-
-	} else {
-
-		result = "🌐 Answer:\n\n"
+		return "🌐 Ответ:\n\n" + mainText
 	}
 
-	for _, t := range cleanTexts {
-
-		result += t + "\n\n"
-	}
-
-	if len(result) > 1800 {
-		result = result[:1800]
-	}
-
-	return result
-}
-
-func cleanText(text string) string {
-
-	text = regexp.MustCompile(
-		`\s+`,
-	).ReplaceAllString(
-		text,
-		" ",
-	)
-
-	text = strings.TrimSpace(text)
-
-	bad := []string{
-		"wikipedia",
-		"jump to content",
-		"create account",
-		"enable javascript",
-		"cloudflare",
-		"reddit",
-		"blocked",
-		"sign up",
-		"log in",
-		"cookie",
-		"privacy policy",
-	}
-
-	lower := strings.ToLower(text)
-
-	for _, b := range bad {
-
-		if strings.Contains(lower, b) {
-			return ""
-		}
-	}
-
-	return text
-}
-
-func containsTooMuchEnglish(text string) bool {
-
-	english := 0
-	russian := 0
-
-	for _, r := range text {
-
-		if r >= 'a' && r <= 'z' {
-			english++
-		}
-
-		if r >= 'A' && r <= 'Z' {
-			english++
-		}
-
-		if r >= 'А' && r <= 'я' {
-			russian++
-		}
-	}
-
-	return english > russian
-}
-
-func containsTooMuchRussian(text string) bool {
-
-	english := 0
-	russian := 0
-
-	for _, r := range text {
-
-		if r >= 'a' && r <= 'z' {
-			english++
-		}
-
-		if r >= 'A' && r <= 'Z' {
-			english++
-		}
-
-		if r >= 'А' && r <= 'я' {
-			russian++
-		}
-	}
-
-	return russian > english
+	return "🌐 Answer:\n\n" + mainText
 }
