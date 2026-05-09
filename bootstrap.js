@@ -1,54 +1,120 @@
 const fs = require("fs")
+const path = require("path")
+
+function ensure(dir){
+  if(!fs.existsSync(dir)){
+    fs.mkdirSync(dir,{recursive:true})
+  }
+}
+
+function write(file,content){
+  ensure(path.dirname(file))
+  fs.writeFileSync(file,content)
+  console.log("CREATED:",file)
+}
 
 /*
 ========================================
-FOLDERS
+ROOT STRUCTURE
 ========================================
 */
 
 const folders = [
+
   "app",
   "app/api",
   "app/api/generate",
+  "app/api/research",
+  "app/api/chat",
+
   "components",
+  "components/ui",
+  "components/editor",
+  "components/dashboard",
+  "components/3d",
+
   "engine",
-  "games",
+  "engine/ai",
+  "engine/reasoning",
+  "engine/generation",
+  "engine/research",
+  "engine/memory",
+  "engine/vector",
+
   "systems",
-  "store",
+  "systems/render",
+  "systems/search",
+  "systems/extraction",
+  "systems/ranking",
+  "systems/trends",
+
+  "backend",
+  "backend/api",
+  "backend/database",
+  "backend/storage",
+
+  "discord",
+
+  "games",
+  "games/maze",
+  "games/runner",
+
   "hooks",
-  "styles",
+  "store",
+
+  "rag",
+  "vector",
+  "memory",
+
+  "templates",
+  "templates/saas",
+  "templates/dashboard",
+  "templates/business",
+  "templates/fandom",
+
   "public",
+  "styles",
+  "deploy",
+
+  "runtime",
+  "sandbox",
+
   "lib"
 ]
 
-folders.forEach(folder => {
-  fs.mkdirSync(folder, {
-    recursive: true
-  })
-})
+folders.forEach(ensure)
 
 /*
 ========================================
-PACKAGE.JSON
+PACKAGE
 ========================================
 */
 
-fs.writeFileSync(
+write(
   "package.json",
   JSON.stringify(
     {
-      name: "ai-builder",
-      private: true,
-      version: "1.0.0",
-      scripts: {
-        dev: "next dev",
-        build: "next build",
-        start: "next start"
+      name:"ai-builder",
+      version:"9.0.0",
+      private:true,
+
+      scripts:{
+        dev:"next dev",
+        build:"next build",
+        start:"next start"
       },
-      dependencies: {
-        next: "14.2.35",
-        react: "^18.2.0",
-        "react-dom": "^18.2.0"
+
+      dependencies:{
+        next:"14.2.35",
+        react:"^18.2.0",
+        "react-dom":"^18.2.0",
+        zustand:"^4.5.2",
+        uuid:"^9.0.1",
+        clsx:"^2.1.1",
+        three:"^0.164.1",
+        "@react-three/fiber":"^8.16.6",
+        "@react-three/drei":"^9.105.6",
+        "framer-motion":"^11.2.10"
       }
     },
     null,
@@ -62,12 +128,14 @@ NEXT CONFIG
 ========================================
 */
 
-fs.writeFileSync(
+write(
   "next.config.js",
 `
 /** @type {import('next').NextConfig} */
 
-const nextConfig = {}
+const nextConfig = {
+  reactStrictMode:true
+}
 
 module.exports = nextConfig
 `
@@ -79,7 +147,7 @@ GLOBAL CSS
 ========================================
 */
 
-fs.writeFileSync(
+write(
   "app/globals.css",
 `
 *{
@@ -94,6 +162,10 @@ body{
   color:white;
   font-family:Arial;
 }
+
+body{
+  overflow-x:hidden;
+}
 `
 )
 
@@ -103,7 +175,7 @@ ROOT LAYOUT
 ========================================
 */
 
-fs.writeFileSync(
+write(
   "app/layout.js",
 `
 import "./globals.css"
@@ -113,7 +185,7 @@ export const metadata = {
   description:"Autonomous Website Intelligence System"
 }
 
-export default function RootLayout({ children }) {
+export default function RootLayout({children}){
 
   return (
     <html lang="en">
@@ -128,43 +200,31 @@ export default function RootLayout({ children }) {
 
 /*
 ========================================
-NAVBAR
+HOME
 ========================================
 */
 
-fs.writeFileSync(
-  "components/Navbar.js",
+write(
+  "app/page.js",
 `
-export default function Navbar() {
+"use client"
+
+import Hero from "../components/Hero"
+import PromptBox from "../components/PromptBox"
+import Preview from "../components/Preview"
+
+export default function Home(){
 
   return (
-    <nav
-      style={{
-        width:"100%",
-        padding:"20px 40px",
-        display:"flex",
-        justifyContent:"space-between",
-        alignItems:"center",
-        borderBottom:"1px solid rgba(255,255,255,0.1)"
-      }}
-    >
+    <main>
 
-      <h2>AI Builder</h2>
+      <Hero />
 
-      <button
-        style={{
-          background:"#2563eb",
-          color:"white",
-          border:"none",
-          padding:"12px 20px",
-          borderRadius:"10px",
-          cursor:"pointer"
-        }}
-      >
-        Dashboard
-      </button>
+      <PromptBox />
 
-    </nav>
+      <Preview />
+
+    </main>
   )
 }
 `
@@ -176,27 +236,22 @@ HERO
 ========================================
 */
 
-fs.writeFileSync(
+write(
   "components/Hero.js",
 `
-export default function Hero() {
+export default function Hero(){
 
   return (
     <section
       style={{
-        minHeight:"90vh",
-        display:"flex",
-        justifyContent:"center",
-        alignItems:"center",
-        flexDirection:"column",
-        textAlign:"center",
-        padding:"20px"
+        padding:"100px 20px",
+        textAlign:"center"
       }}
     >
 
       <h1
         style={{
-          fontSize:"70px",
+          fontSize:"72px",
           marginBottom:"20px"
         }}
       >
@@ -206,8 +261,7 @@ export default function Hero() {
       <p
         style={{
           opacity:0.7,
-          maxWidth:"700px",
-          lineHeight:"1.6"
+          fontSize:"22px"
         }}
       >
         Autonomous Website Intelligence System
@@ -221,26 +275,80 @@ export default function Hero() {
 
 /*
 ========================================
-HOME PAGE
+PROMPT BOX
 ========================================
 */
 
-fs.writeFileSync(
-  "app/page.js",
+write(
+  "components/PromptBox.js",
 `
-import Navbar from "../components/Navbar"
-import Hero from "../components/Hero"
+"use client"
 
-export default function Home() {
+import {useState} from "react"
+import useBuilderStore from "../store/builderStore"
+import {generateWebsite} from "../engine/generation/generator"
+
+export default function PromptBox(){
+
+  const [loading,setLoading] = useState(false)
+
+  const prompt = useBuilderStore(s=>s.prompt)
+  const setPrompt = useBuilderStore(s=>s.setPrompt)
+  const setGenerated = useBuilderStore(s=>s.setGenerated)
+
+  async function handleGenerate(){
+
+    setLoading(true)
+
+    const result = await generateWebsite(prompt)
+
+    setGenerated(result)
+
+    setLoading(false)
+  }
 
   return (
-    <main>
+    <section
+      style={{
+        maxWidth:"1000px",
+        margin:"auto",
+        padding:"20px"
+      }}
+    >
 
-      <Navbar />
+      <textarea
+        value={prompt}
+        onChange={(e)=>setPrompt(e.target.value)}
+        placeholder="Describe your website..."
+        style={{
+          width:"100%",
+          height:"220px",
+          background:"#111827",
+          color:"white",
+          border:"none",
+          borderRadius:"20px",
+          padding:"20px",
+          fontSize:"18px"
+        }}
+      />
 
-      <Hero />
+      <button
+        onClick={handleGenerate}
+        style={{
+          width:"100%",
+          marginTop:"20px",
+          padding:"20px",
+          borderRadius:"20px",
+          border:"none",
+          background:"#2563eb",
+          color:"white",
+          fontSize:"20px"
+        }}
+      >
+        {loading ? "Generating..." : "Generate Website"}
+      </button>
 
-    </main>
+    </section>
   )
 }
 `
@@ -248,14 +356,257 @@ export default function Home() {
 
 /*
 ========================================
-API GENERATOR
+PREVIEW
 ========================================
 */
 
-fs.writeFileSync(
+write(
+  "components/Preview.js",
+`
+"use client"
+
+import useBuilderStore from "../store/builderStore"
+
+export default function Preview(){
+
+  const generated = useBuilderStore(s=>s.generated)
+
+  return (
+    <section
+      style={{
+        padding:"40px"
+      }}
+    >
+
+      <div
+        style={{
+          background:"#111827",
+          borderRadius:"20px",
+          padding:"30px",
+          minHeight:"400px"
+        }}
+      >
+
+        <h2
+          style={{
+            marginBottom:"20px"
+          }}
+        >
+          Live Preview
+        </h2>
+
+        <pre
+          style={{
+            whiteSpace:"pre-wrap",
+            lineHeight:"1.6",
+            opacity:0.85
+          }}
+        >
+          {generated}
+        </pre>
+
+      </div>
+
+    </section>
+  )
+}
+`
+)
+
+/*
+========================================
+STORE
+========================================
+*/
+
+write(
+  "store/builderStore.js",
+`
+import {create} from "zustand"
+
+const useBuilderStore = create((set)=>({
+
+  prompt:"",
+  generated:"",
+
+  setPrompt:(prompt)=>set({prompt}),
+  setGenerated:(generated)=>set({generated})
+
+}))
+
+export default useBuilderStore
+`
+)
+
+/*
+========================================
+GENERATOR ENGINE
+========================================
+*/
+
+write(
+  "engine/generation/generator.js",
+`
+import {analyzePrompt} from "../reasoning/analyzer"
+
+export async function generateWebsite(prompt){
+
+  const analysis = analyzePrompt(prompt)
+
+  await new Promise(r=>setTimeout(r,1200))
+
+  return \`
+
+========================================
+
+AI WEBSITE GENERATED
+
+========================================
+
+PROMPT:
+\${prompt}
+
+========================================
+
+TYPE:
+\${analysis.type}
+
+STYLE:
+\${analysis.style}
+
+========================================
+
+SECTIONS
+
+- Navbar
+- Hero
+- Features
+- Testimonials
+- Pricing
+- Footer
+
+========================================
+
+AI COMPONENTS
+
+- Dynamic UI
+- Responsive Layout
+- SEO Structure
+- Modern Design
+- Smart Content Blocks
+
+========================================
+
+STATUS:
+ONLINE
+
+========================================
+\`
+}
+`
+)
+
+/*
+========================================
+REASONING
+========================================
+*/
+
+write(
+  "engine/reasoning/analyzer.js",
+`
+export function analyzePrompt(prompt){
+
+  return {
+    type:"AI Website",
+    style:"Modern",
+    confidence:0.98,
+    prompt
+  }
+}
+`
+)
+
+/*
+========================================
+AI SEARCH
+========================================
+*/
+
+write(
+  "engine/research/search.js",
+`
+export async function searchInternet(query){
+
+  return {
+    success:true,
+    query,
+    results:[]
+  }
+}
+`
+)
+
+/*
+========================================
+MEMORY
+========================================
+*/
+
+write(
+  "engine/memory/memory.js",
+`
+export const memory = {
+  history:[]
+}
+`
+)
+
+/*
+========================================
+VECTOR
+========================================
+*/
+
+write(
+  "engine/vector/vector.js",
+`
+export function createVector(text){
+
+  return {
+    text,
+    dimensions:128
+  }
+}
+`
+)
+
+/*
+========================================
+DISCORD
+========================================
+*/
+
+write(
+  "discord/bot.js",
+`
+export async function startBot(){
+
+  console.log("AI Discord Bot Online")
+}
+`
+)
+
+/*
+========================================
+API ROUTES
+========================================
+*/
+
+write(
   "app/api/generate/route.js",
 `
-export async function POST(req) {
+export async function POST(req){
 
   const body = await req.json()
 
@@ -268,90 +619,34 @@ export async function POST(req) {
 `
 )
 
-/*
-========================================
-AI ENGINE
-========================================
-*/
-
-fs.writeFileSync(
-  "engine/brain.js",
+write(
+  "app/api/chat/route.js",
 `
-export function analyzePrompt(prompt) {
+export async function POST(req){
 
-  return {
-    prompt,
-    type:"website",
-    style:"modern",
-    status:"analyzed"
-  }
-}
-`
-)
+  const body = await req.json()
 
-/*
-========================================
-SYSTEMS
-========================================
-*/
-
-fs.writeFileSync(
-  "systems/generator.js",
-`
-export function generateWebsite(data) {
-
-  return {
+  return Response.json({
     success:true,
-    website:data
-  }
+    reply:"AI response generated",
+    input:body
+  })
 }
 `
 )
 
-/*
-========================================
-STORE
-========================================
-*/
-
-fs.writeFileSync(
-  "store/state.js",
+write(
+  "app/api/research/route.js",
 `
-export const globalState = {
-  projects:[]
-}
-`
-)
+export async function POST(req){
 
-/*
-========================================
-HOOKS
-========================================
-*/
+  const body = await req.json()
 
-fs.writeFileSync(
-  "hooks/useAI.js",
-`
-export function useAI() {
-
-  async function generate(prompt) {
-
-    const res = await fetch("/api/generate",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        prompt
-      })
-    })
-
-    return res.json()
-  }
-
-  return {
-    generate
-  }
+  return Response.json({
+    success:true,
+    query:body.query || null,
+    results:[]
+  })
 }
 `
 )
@@ -362,13 +657,15 @@ README
 ========================================
 */
 
-fs.writeFileSync(
+write(
   "README.md",
 `
 # AI Builder
 
 Autonomous Website Intelligence System
+
+PHASE 1-9 INITIALIZED
 `
 )
 
-console.log("AI Builder Full Structure Generated")
+console.log("AI BUILDER PHASE 1-9 GENERATED")
