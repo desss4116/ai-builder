@@ -38,8 +38,10 @@ createFile(
     "three": "^0.164.1",
     "@react-three/fiber": "^8.16.6",
     "@react-three/drei": "^9.105.6",
-    "discord.js": "^14.15.3"
-  }
+    "discord.js": "^14.15.3",
+"typescript": "^5.5.4",
+"@types/react": "^18.3.3",
+"@types/node": "^20.14.10"
 }`
 )
 
