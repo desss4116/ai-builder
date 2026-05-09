@@ -1,8 +1,6 @@
 package internet
 
 import (
-	"ai-builder/crawler"
-	"ai-builder/search"
 	"io"
 	"net/http"
 	"net/url"
@@ -11,10 +9,10 @@ import (
 	"time"
 )
 
-func Search(query string) string {
+func Search(query string) []string {
 
 	client := &http.Client{
-		Timeout: 20 * time.Second,
+		Timeout: 15 * time.Second,
 	}
 
 	searchURL :=
@@ -28,7 +26,7 @@ func Search(query string) string {
 	)
 
 	if err != nil {
-		return ""
+		return []string{}
 	}
 
 	req.Header.Set(
@@ -39,7 +37,7 @@ func Search(query string) string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return ""
+		return []string{}
 	}
 
 	defer resp.Body.Close()
@@ -47,13 +45,14 @@ func Search(query string) string {
 	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		return ""
+		return []string{}
 	}
 
 	html := string(body)
 
+	// extract snippets
 	re := regexp.MustCompile(
-		`uddg=([^"]+)`,
+		`result__snippet.*?>(.*?)<`,
 	)
 
 	matches := re.FindAllStringSubmatch(
@@ -61,94 +60,55 @@ func Search(query string) string {
 		-1,
 	)
 
-	if len(matches) == 0 {
-		return ""
-	}
-
-	trustedDomains := []string{
-		"wikipedia.org",
-		"imdb.com",
-		"kinopoisk",
-		"fandom.com",
-		"reddit.com",
-		"github.com",
-		"medium.com",
-		"britannica.com",
-	}
-
-	var finalText string
-
-	used := 0
+	var results []string
 
 	for _, m := range matches {
 
-		if used >= 5 {
+		if len(m) < 2 {
+			continue
+		}
+
+		text := m[1]
+
+		// remove tags
+		text = regexp.MustCompile(
+			`<[^>]+>`,
+		).ReplaceAllString(
+			text,
+			"",
+		)
+
+		text = strings.TrimSpace(text)
+
+		if len(text) < 50 {
+			continue
+		}
+
+		// filter garbage
+		lower := strings.ToLower(text)
+
+		if strings.Contains(lower, "enable javascript") {
+			continue
+		}
+
+		if strings.Contains(lower, "sign up") {
+			continue
+		}
+
+		if strings.Contains(lower, "create account") {
+			continue
+		}
+
+		if strings.Contains(lower, "blocked") {
+			continue
+		}
+
+		results = append(results, text)
+
+		if len(results) >= 10 {
 			break
 		}
-
-		link, err := url.QueryUnescape(m[1])
-
-		if err != nil {
-			continue
-		}
-
-		lower := strings.ToLower(link)
-
-		allowed := false
-
-		for _, domain := range trustedDomains {
-
-			if strings.Contains(lower, domain) {
-				allowed = true
-				break
-			}
-		}
-
-		if !allowed {
-			continue
-		}
-
-		if strings.Contains(lower, "duckduckgo") {
-			continue
-		}
-
-		if strings.Contains(lower, "javascript") {
-			continue
-		}
-
-		if strings.Contains(lower, ".js") {
-			continue
-		}
-
-		text := crawler.Crawl(link)
-
-		if search.IsBadContent(text) {
-			continue
-		}
-
-		if len(text) > 2000 {
-			text = text[:2000]
-		}
-
-		finalText += text + "\n\n"
-
-		used++
 	}
 
-	if finalText == "" {
-		return "❌ Не удалось получить информацию."
-	}
-
-	finalText = regexp.MustCompile(
-		`\s+`,
-	).ReplaceAllString(
-		finalText,
-		" ",
-	)
-
-	if len(finalText) > 6000 {
-		finalText = finalText[:6000]
-	}
-
-	return finalText
+	return results
 }
