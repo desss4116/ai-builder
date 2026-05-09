@@ -1,488 +1,404 @@
 <!--
 AI BUILDER ULTIMATE
-STARTER FOUNDATION
-WORKS ON:
-- GitHub
-- Cloudflare Pages
-- Phone
-- No Termux
-- No Railway
+MAZE RUNNER CINEMATIC GENERATION SYSTEM
+ULTRA FRONTEND ARCHITECTURE
 -->
-
-<!DOCTYPE html>
-
-<html lang="en">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>AI Builder Ultimate</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-
-body{
-background:#020617;
-color:white;
-font-family:Arial;
-}
-
-textarea{
-background:#0f172a;
-border:1px solid #334155;
-}
-
-.card{
-background:#0f172a;
-border:1px solid #1e293b;
-}
-
-</style>
-
-</head>
-
-<body class="p-10">
-
-<h1 class="text-5xl font-bold mb-6">
-AI Builder Ultimate
-</h1>
-
-<p class="text-slate-400 mb-10">
-High-Fidelity Heuristic Inference Engine
-</p>
-
-<textarea
-id="prompt"
-class="w-full h-40 rounded-xl p-4 mb-6"
-placeholder="Сделай SaaS для AI image generation..."
-></textarea>
-
-<button
-onclick="generateProject()"
-class="bg-blue-500 px-8 py-4 rounded-2xl text-xl"
->
-Generate Project
-</button>
-
-<div
-id="output"
-class="mt-10 grid gap-6"
-></div>
 
 <script>
 
 /*
-========================================
-SEMANTIC ENGINE
-========================================
+====================================================
+CINEMATIC WEBSITE DNA
+====================================================
 */
 
-function semanticRank(prompt){
-
-let score = 0
-
-const keywords = [
-
-"ai",
-"saas",
-"dashboard",
-"game",
-"portfolio",
-"store",
-"three.js",
-"webgl",
-"automation",
-"discord",
-"builder",
-"rag",
-"vector",
-"semantic",
-"brain",
-"ui",
-"backend",
-"frontend",
-
-]
-
-keywords.forEach(word => {
-
-if(prompt.toLowerCase().includes(word)){
-score += 10
-}
-
-})
-
-return score
-
-}
-
-/*
-========================================
-INTENT DETECTION
-========================================
-*/
-
-function detectIntent(prompt){
-
-prompt = prompt.toLowerCase()
-
-if(prompt.includes("game")){
-return "Game"
-
-}
-
-if(prompt.includes("dashboard")){
-return "Dashboard"
-
-}
-
-if(prompt.includes("store")){
-return "Store"
-
-}
-
-if(prompt.includes("portfolio")){
-return "Portfolio"
-
-}
-
-if(prompt.includes("saas")){
-return "SaaS"
-
-}
-
-if(prompt.includes("blog")){
-return "Blog"
-
-}
-
-if(prompt.includes("admin")){
-return "Admin Panel"
-
-}
-
-return "Website"
-
-}
-
-/*
-========================================
-AHLC ENGINE
-========================================
-*/
-
-function autonomousHeuristicLogicController(prompt){
+function buildCinematicWebsite(prompt){
 
 return {
 
-semantic: semanticRank(prompt),
-
-intent: detectIntent(prompt),
-
-pipeline: [
-
-"Semantic Analysis",
-"Intent Detection",
-"Vector Memory",
-"Knowledge Graph",
-"RAG Context",
-"Architecture Planning",
-"UI Generation",
-"Backend Generation",
-"Deployment Planning",
-
-]
-
-}
-
-}
-
-/*
-========================================
-VECTOR MEMORY
-========================================
-*/
-
-function buildVectorMemory(){
-
-return [
-
-"semantic_context",
-"user_preferences",
-"design_patterns",
-"conversation_memory",
-"project_history",
-
-]
-
-}
-
-/*
-========================================
-KNOWLEDGE GRAPH
-========================================
-*/
-
-function buildKnowledgeGraph(){
-
-return [
-
-"AI -> SaaS",
-"SaaS -> Dashboard",
-"Dashboard -> Authentication",
-"Authentication -> Database",
-"Database -> Deployment",
-
-]
-
-}
-
-/*
-========================================
-ARCHITECTURE PLANNER
-========================================
-*/
-
-function buildArchitecture(){
-
-return [
+framework: [
 
 "Next.js",
+"React",
+"TypeScript",
+
+],
+
+frontend: [
+
 "TailwindCSS",
 "Framer Motion",
+"GSAP",
 "Shadcn/UI",
-"Cloudflare Pages",
-"RAG",
-"Knowledge Graph",
-"Semantic Ranker",
-"BM25",
-"TF-IDF",
-"Vector Memory",
-"Deterministic Cognitive Pipeline",
 
-]
+],
 
-}
+graphics: [
 
-/*
-========================================
-FEATURE ENGINE
-========================================
-*/
-
-function buildFeatures(){
-
-return [
-
-"Authentication",
-"Responsive UI",
-"Realtime Dashboard",
-"Admin Panel",
-"Dark Mode",
-"Animations",
-"SEO",
-"Analytics",
-"Project Builder",
-"ZIP Export",
-"Cloudflare Deploy",
-"Discord Dashboard",
-
-]
-
-}
-
-/*
-========================================
-GAME ENGINE
-========================================
-*/
-
-function buildGameEngine(){
-
-return [
-
-"Canvas Games",
-"2D Engine",
 "Three.js",
+"React Three Fiber",
 "WebGL",
-"Browser Multiplayer",
+"WebGPU",
+
+],
+
+games: [
+
+"PixiJS",
+"Babylon.js",
+"PlayCanvas",
+
+],
+
+backend: [
+
+"Node.js",
+"NestJS",
+"PostgreSQL",
+
+],
+
+ultra: [
+
+"WebAssembly",
+"WASM Physics",
+"Realtime Rendering",
+"Cinematic Effects",
+
+],
+
+design: [
+
+"Figma",
+"Blender",
+"Motion Design",
+"Dark Cinematic UI",
+
+],
+
+features: [
+
+"3D Maze",
+"Interactive Characters",
+"Movie Lore",
+"Animations",
+"Realtime Lighting",
+"Atmospheric Fog",
+"Character Pages",
+"Faction System",
+"Soundtrack Player",
+"Fan Community",
+"Lore Timeline",
+"Survival Dashboard",
+"Interactive Map",
 
 ]
 
 }
 
+}
+
 /*
-========================================
-TAILWIND DNA
-========================================
+====================================================
+AI VISUAL ANALYZER
+====================================================
 */
 
-function generateBeautifulUI(intent){
+function analyzeMovie(prompt){
+
+prompt = prompt.toLowerCase()
+
+if(prompt.includes("бегущий в лабиринте")){
+
+return {
+
+theme: "Maze Runner",
+
+colors: [
+
+"#0f172a",
+"#111827",
+"#1e293b",
+"#334155",
+
+],
+
+style: [
+
+"Cinematic",
+"Dark",
+"Mystery",
+"Post-Apocalyptic",
+
+],
+
+effects: [
+
+"Fog",
+"Rain",
+"Glowing Lights",
+"Particles",
+"Maze Animations",
+
+],
+
+layout: [
+
+"Hero Section",
+"Character Pages",
+"Interactive Maze",
+"Movie Timeline",
+"Survival Dashboard",
+
+]
+
+}
+
+}
+
+return {
+
+theme: "Universal",
+
+colors: [
+
+"#020617",
+
+],
+
+style: [
+
+"Modern",
+
+],
+
+effects: [
+
+"Smooth Animations",
+
+],
+
+layout: [
+
+"Landing Page",
+
+]
+
+}
+
+}
+
+/*
+====================================================
+AI WEBSITE GENERATOR
+====================================================
+*/
+
+function generatePerfectWebsite(prompt){
+
+const movie =
+analyzeMovie(prompt)
+
+const architecture =
+buildCinematicWebsite(prompt)
+
+return {
+
+title:
+movie.theme + " Ultimate Experience",
+
+description:
+"AI Generated Cinematic Fan Experience",
+
+theme:
+movie,
+
+architecture:
+architecture,
+
+}
+
+}
+
+/*
+====================================================
+ULTRA UI GENERATOR
+====================================================
+*/
+
+function renderMazeRunnerWebsite(){
 
 return `
 
-<div class="card p-6 rounded-3xl">
+<section class="min-h-screen bg-black text-white p-10">
 
-<h2 class="text-3xl font-bold mb-4">
-${intent} Generator
-</h2>
+<div class="max-w-7xl mx-auto">
 
-<p class="text-slate-400 mb-6">
-AI Generated Interface using Tailwind DNA
+<h1 class="text-7xl font-black mb-6">
+THE MAZE RUNNER
+</h1>
+
+<p class="text-slate-400 text-2xl mb-10">
+Interactive Cinematic Experience
 </p>
 
-<div class="grid md:grid-cols-2 gap-4">
+<div class="grid md:grid-cols-3 gap-6">
 
-<div class="bg-slate-900 p-6 rounded-2xl">
-Analytics
-</div>
+<div class="bg-slate-900 p-8 rounded-3xl">
 
-<div class="bg-slate-900 p-6 rounded-2xl">
-Users
-</div>
+<h2 class="text-3xl mb-4">
+3D Maze
+</h2>
 
-<div class="bg-slate-900 p-6 rounded-2xl">
-Projects
-</div>
-
-<div class="bg-slate-900 p-6 rounded-2xl">
-Deployments
-</div>
+<p class="text-slate-400">
+Realtime WebGL Maze Exploration
+</p>
 
 </div>
 
+<div class="bg-slate-900 p-8 rounded-3xl">
+
+<h2 class="text-3xl mb-4">
+Characters
+</h2>
+
+<p class="text-slate-400">
+Detailed Lore & Relationships
+</p>
+
 </div>
+
+<div class="bg-slate-900 p-8 rounded-3xl">
+
+<h2 class="text-3xl mb-4">
+Survival System
+</h2>
+
+<p class="text-slate-400">
+Realtime Mission Dashboard
+</p>
+
+</div>
+
+</div>
+
+<div class="mt-12 bg-slate-900 p-10 rounded-3xl">
+
+<h2 class="text-5xl mb-6">
+Interactive Maze Engine
+</h2>
+
+<div class="h-[500px] bg-black rounded-3xl border border-slate-700 flex items-center justify-center">
+
+<p class="text-slate-500 text-2xl">
+Three.js Maze Renderer
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
 
 `
 
 }
 
 /*
-========================================
-PROJECT GENERATOR
-========================================
+====================================================
+NEXT LEVEL AI DESIGN ENGINE
+====================================================
 */
 
-function generateProject(){
+function TailwindDesignDNA(){
 
-const prompt =
-document.getElementById("prompt").value
+return {
 
-const ahlc =
-autonomousHeuristicLogicController(prompt)
+layout: [
 
-const architecture =
-buildArchitecture()
+"Atomic Design",
+"Responsive Grid",
+"Cinematic Sections",
+"Glassmorphism",
+"Dark Theme",
 
-const features =
-buildFeatures()
+],
 
-const memory =
-buildVectorMemory()
+animations: [
 
-const graph =
-buildKnowledgeGraph()
+"GSAP",
+"Framer Motion",
+"Parallax",
+"Realtime Effects",
+"Particles",
 
-const game =
-buildGameEngine()
+],
 
-const ui =
-generateBeautifulUI(
-ahlc.intent
-)
+experience: [
 
-document.getElementById("output").innerHTML = `
+"Movie-Level UI",
+"AAA Interface",
+"Immersive Experience",
 
-<div class="card p-6 rounded-3xl">
+]
 
-<h2 class="text-4xl font-bold mb-4">
-🧠 AI Analysis
-</h2>
+}
 
-<p class="mb-3">
-Intent:
-<b>${ahlc.intent}</b>
-</p>
+}
 
-<p class="mb-3">
-Semantic Score:
-<b>${ahlc.semantic}</b>
-</p>
+/*
+====================================================
+SELF OPTIMIZING HEURISTIC ENGINE
+====================================================
+*/
 
-</div>
+function SelfOptimizingHeuristicInferenceEngine(){
 
-<div class="card p-6 rounded-3xl">
+return {
 
-<h2 class="text-3xl font-bold mb-4">
-🏗 Architecture
-</h2>
+brain: [
 
-${architecture.map(item => `
-<div class="mb-2">${item}</div>
-`).join("")}
+"BM25",
+"TF-IDF",
+"Cross Paragraph Scoring",
 
-</div>
+],
 
-<div class="card p-6 rounded-3xl">
+internet: [
 
-<h2 class="text-3xl font-bold mb-4">
-⚙ Features
-</h2>
+"DOM Density Analysis",
+"Contextual Pruning",
 
-${features.map(item => `
-<div class="mb-2">${item}</div>
-`).join("")}
+],
 
-</div>
+memory: [
 
-<div class="card p-6 rounded-3xl">
+"Knowledge Graph",
+"Semantic Memory",
+"Relationship Mapping",
 
-<h2 class="text-3xl font-bold mb-4">
-🧠 Vector Memory
-</h2>
+],
 
-${memory.map(item => `
-<div class="mb-2">${item}</div>
-`).join("")}
+design: [
 
-</div>
+"Tailwind DNA",
+"Component Intelligence",
+"Dynamic Layout Engine",
 
-<div class="card p-6 rounded-3xl">
+],
 
-<h2 class="text-3xl font-bold mb-4">
-🕸 Knowledge Graph
-</h2>
+pipeline: [
 
-${graph.map(item => `
-<div class="mb-2">${item}</div>
-`).join("")}
+"Deterministic Cognitive Pipeline",
+"Recursive Semantic Middleware",
+"AHLC",
 
-</div>
+]
 
-<div class="card p-6 rounded-3xl">
-
-<h2 class="text-3xl font-bold mb-4">
-🎮 Game Engine
-</h2>
-
-${game.map(item => `
-<div class="mb-2">${item}</div>
-`).join("")}
-
-</div>
-
-${ui}
-
-`
+}
 
 }
 
 </script>
-
-</body>
-
-</html>
