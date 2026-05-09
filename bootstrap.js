@@ -669,3 +669,123 @@ PHASE 1-9 INITIALIZED
 )
 
 console.log("AI BUILDER PHASE 1-9 GENERATED")
+ensure("backend")
+ensure("backend/discord")
+ensure("backend/engine")
+ensure("backend/search")
+ensure("backend/extractor")
+ensure("backend/summarizer")
+ensure("backend/memory")
+
+write(
+  "go.mod",
+`
+module ai-builder
+
+go 1.22.0
+
+require github.com/bwmarrin/discordgo v0.28.1
+`
+)
+
+write(
+  "backend/main.go",
+`
+package main
+
+import (
+  "ai-builder/backend/discord"
+  "log"
+  "os"
+)
+
+func main(){
+
+  token := os.Getenv("DISCORD_TOKEN")
+
+  if token == ""{
+    log.Fatal("DISCORD_TOKEN missing")
+  }
+
+  err := discord.StartBot(token)
+
+  if err != nil{
+    log.Fatal(err)
+  }
+
+  log.Println("AI Builder Backend Online")
+
+  select{}
+}
+`
+)
+
+write(
+  "backend/discord/bot.go",
+`
+package discord
+
+import "github.com/bwmarrin/discordgo"
+
+func StartBot(token string) error {
+
+  session, err := discordgo.New("Bot " + token)
+
+  if err != nil{
+    return err
+  }
+
+  session.AddHandler(MessageHandler)
+
+  session.Identify.Intents =
+    discordgo.IntentsGuildMessages |
+    discordgo.IntentsDirectMessages |
+    discordgo.IntentsMessageContent
+
+  return session.Open()
+}
+`
+)
+
+write(
+  "backend/discord/handler.go",
+`
+package discord
+
+import (
+  "ai-builder/backend/engine"
+  "github.com/bwmarrin/discordgo"
+)
+
+func MessageHandler(
+  s *discordgo.Session,
+  m *discordgo.MessageCreate,
+){
+
+  if m.Author.Bot{
+    return
+  }
+
+  response := engine.ProcessQuery(m.Content)
+
+  s.ChannelMessageSend(
+    m.ChannelID,
+    response,
+  )
+}
+`
+)
+
+write(
+  "backend/engine/response.go",
+`
+package engine
+
+func ProcessQuery(query string) string {
+
+  return "AI Engine Response: " + query
+}
+`
+)
+
+console.log("BACKEND GENERATED")
