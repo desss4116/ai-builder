@@ -6,23 +6,18 @@ import (
 	"ai-builder/memory"
 	"log"
 	"os"
-	"strings"
+	"os/signal"
+	"syscall"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 func main() {
 
-	token :=
-		os.Getenv(
-			"DISCORD_TOKEN",
-		)
+	token := os.Getenv("DISCORD_TOKEN")
 
 	if token == "" {
-
-		log.Fatal(
-			"DISCORD_TOKEN not found",
-		)
+		log.Fatal("DISCORD_TOKEN not found")
 	}
 
 	session, err :=
@@ -34,14 +29,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	session.AddHandler(
-		messageCreate,
-	)
-
 	session.Identify.Intents =
 		discordgo.IntentsGuildMessages |
 			discordgo.IntentsDirectMessages |
 			discordgo.IntentsMessageContent
+
+	session.AddHandler(messageCreate)
 
 	err = session.Open()
 
@@ -49,11 +42,20 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println(
-		"🚀 Lightweight AI System Online",
+	log.Println("AI Builder Online")
+
+	stop := make(chan os.Signal, 1)
+
+	signal.Notify(
+		stop,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		os.Interrupt,
 	)
 
-	select {}
+	<-stop
+
+	session.Close()
 }
 
 func messageCreate(
@@ -65,28 +67,31 @@ func messageCreate(
 		return
 	}
 
-	query :=
-		strings.TrimSpace(
-			m.Content,
-		)
+	query := m.Content
 
 	if query == "" {
 		return
 	}
 
-	s.ChannelMessageSend(
+	_, _ = s.ChannelMessageSend(
 		m.ChannelID,
 		"🧠 Анализирую запрос...",
 	)
 
-	// SAVE USER QUERY
-
-	memory.Save(query)
-
 	// INTERNET SEARCH
 
 	results :=
-		internet.Search(query)
+		internet.LiveSearch(query)
+
+	if len(results) == 0 {
+
+		_, _ = s.ChannelMessageSend(
+			m.ChannelID,
+			"❌ Ничего не найдено.",
+		)
+
+		return
+	}
 
 	// AI SYNTHESIS
 
@@ -96,7 +101,7 @@ func messageCreate(
 			results,
 		)
 
-	// SAVE AI RESPONSE
+	// MEMORY
 
 	memory.Save(answer)
 
@@ -104,13 +109,13 @@ func messageCreate(
 		answer = answer[:1900]
 	}
 
-	_, err =
+	_, sendErr :=
 		s.ChannelMessageSend(
 			m.ChannelID,
 			answer,
 		)
 
-	if err != nil {
-		log.Println(err)
+	if sendErr != nil {
+		log.Println(sendErr)
 	}
 }
