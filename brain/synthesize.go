@@ -2,7 +2,6 @@ package brain
 
 import (
 	"ai-builder/rag"
-	"strings"
 )
 
 func Synthesize(
