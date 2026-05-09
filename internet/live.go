@@ -50,15 +50,15 @@ func Search(query string) []string {
 
 	html := string(body)
 
-	// extract snippets
 	re := regexp.MustCompile(
 		`result__snippet.*?>(.*?)<`,
 	)
 
-	matches := re.FindAllStringSubmatch(
-		html,
-		-1,
-	)
+	matches :=
+		re.FindAllStringSubmatch(
+			html,
+			-1,
+		)
 
 	var results []string
 
@@ -70,7 +70,6 @@ func Search(query string) []string {
 
 		text := m[1]
 
-		// remove tags
 		text = regexp.MustCompile(
 			`<[^>]+>`,
 		).ReplaceAllString(
@@ -80,26 +79,32 @@ func Search(query string) []string {
 
 		text = strings.TrimSpace(text)
 
-		if len(text) < 50 {
+		if len(text) < 80 {
 			continue
 		}
 
-		// filter garbage
 		lower := strings.ToLower(text)
 
-		if strings.Contains(lower, "enable javascript") {
-			continue
+		bad := []string{
+			"reddit",
+			"blocked",
+			"sign up",
+			"cookie",
+			"privacy policy",
+			"enable javascript",
+			"jump to content",
 		}
 
-		if strings.Contains(lower, "sign up") {
-			continue
+		skip := false
+
+		for _, b := range bad {
+
+			if strings.Contains(lower, b) {
+				skip = true
+			}
 		}
 
-		if strings.Contains(lower, "create account") {
-			continue
-		}
-
-		if strings.Contains(lower, "blocked") {
+		if skip {
 			continue
 		}
 
