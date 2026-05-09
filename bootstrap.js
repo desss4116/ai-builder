@@ -1,417 +1,306 @@
-// bootstrap.js
-
 const fs = require("fs")
 const path = require("path")
 
-function createFile(filePath, content = "") {
-
-  fs.mkdirSync(path.dirname(filePath), {
-    recursive: true
-  })
-
-  fs.writeFileSync(filePath, content)
-
-  console.log("CREATED:", filePath)
-
+function make(dir) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+  }
 }
 
-//
-// ROOT
-//
+function save(file, content) {
+  make(path.dirname(file))
+  fs.writeFileSync(file, content)
+  console.log("CREATED:", file)
+}
 
-createFile(
+const structure = [
+  "app",
+  "app/components",
+  "app/components/ui",
+  "app/components/layout",
+  "app/components/game",
+  "app/engine",
+  "app/games",
+  "app/games/glade-run",
+  "app/games/map-maker",
+  "app/store",
+  "app/hooks",
+  "app/lib",
+  "app/styles",
+  "public"
+]
+
+structure.forEach(make)
+
+save(
   "package.json",
-  `{
-  "name": "ai-builder",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "dependencies": {
-    "next": "^14.2.3",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "zustand": "^4.5.2",
-    "framer-motion": "^11.2.10",
-    "three": "^0.164.1",
-    "@react-three/fiber": "^8.16.6",
-    "@react-three/drei": "^9.105.6",
-    "discord.js": "^14.15.3",
-"typescript": "^5.5.4",
-"@types/react": "^18.3.3",
-"@types/node": "^20.14.10"
-}`
+  JSON.stringify(
+    {
+      name: "ai-builder",
+      version: "1.0.0",
+      private: true,
+
+      scripts: {
+        dev: "next dev",
+        build: "next build",
+        start: "next start"
+      },
+
+      dependencies: {
+        next: "14.2.35",
+        react: "^18.2.0",
+        "react-dom": "^18.2.0",
+        "framer-motion": "^11.0.0",
+        zustand: "^4.5.2",
+        three: "^0.164.1",
+        "@react-three/fiber": "^8.16.6",
+        "@react-three/drei": "^9.105.6",
+        "pixi.js": "^8.1.1"
+      }
+    },
+    null,
+    2
+  )
 )
 
-createFile(
+save(
   "next.config.js",
-  `module.exports = {
-  reactStrictMode: true
-}`
-)
-
-createFile(
-  "tailwind.config.js",
-  `module.exports = {
-  content: [
-    "./app/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}"
-  ],
-  theme: {
-    extend: {}
-  },
-  plugins: []
-}`
-)
-
-createFile(
-  "tsconfig.json",
-  `{
-  "compilerOptions": {
-    "target": "ES6",
-    "lib": ["dom", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": false,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "jsx": "preserve"
-  }
-}`
-)
-
-//
-// APP
-//
-
-createFile(
-  "app/layout.tsx",
   `
-export default function RootLayout({
-  children
-}) {
+/** @type {import('next').NextConfig} */
 
+const nextConfig = {
+  reactStrictMode: true
+}
+
+module.exports = nextConfig
+`
+)
+
+save(
+  "app/layout.jsx",
+  `
+export const metadata = {
+  title: "AI Builder",
+  description: "Universal cinematic website generator"
+}
+
+import "./styles/globals.css"
+
+export default function RootLayout({ children }) {
   return (
-    <html>
-      <body>
-        {children}
-      </body>
+    <html lang="en">
+      <body>{children}</body>
     </html>
   )
-
 }
 `
 )
 
-createFile(
-  "app/page.tsx",
+save(
+  "app/styles/globals.css",
   `
-import HeroScene from "../components/cinematic/HeroScene"
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
 
-export default function Home() {
+html,body{
+  background:#050505;
+  color:white;
+  font-family:Arial;
+  overflow-x:hidden;
+}
 
-  return (
+body{
+  min-height:100vh;
+}
 
-    <main className="bg-black text-white min-h-screen">
-
-      <HeroScene />
-
-      <div className="p-20">
-
-        <h1 className="text-6xl font-black">
-          AI BUILDER
-        </h1>
-
-        <p className="mt-6 text-zinc-400 text-xl">
-          Universal Autonomous Experience Generator
-        </p>
-
-      </div>
-
-    </main>
-
-  )
-
+canvas{
+  touch-action:none;
 }
 `
 )
 
-createFile(
-  "app/globals.css",
+save(
+  "app/store/useBuilderStore.js",
   `
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+import { create } from "zustand"
 
-body {
-  background: black;
-  color: white;
-  overflow-x: hidden;
-}
+export const useBuilderStore = create((set) => ({
+  glitch:false,
+  setGlitch:(v)=>set({glitch:v})
+}))
 `
 )
 
-//
-// COMPONENTS
-//
-
-createFile(
-  "components/cinematic/HeroScene.tsx",
+save(
+  "app/components/layout/Hero.jsx",
   `
 "use client"
 
 import { motion } from "framer-motion"
 
-export default function HeroScene() {
-
+export default function Hero() {
   return (
-
-    <section className="h-screen flex items-center justify-center">
-
-      <motion.div
-
-        animate={{
-          opacity: [0.4, 1, 0.4]
+    <section
+      style={{
+        height:"100vh",
+        display:"flex",
+        justifyContent:"center",
+        alignItems:"center",
+        flexDirection:"column",
+        position:"relative"
+      }}
+    >
+      <motion.h1
+        initial={{opacity:0,y:100}}
+        animate={{opacity:1,y:0}}
+        transition={{duration:1}}
+        style={{
+          fontSize:"6rem",
+          fontWeight:"900",
+          letterSpacing:"6px"
         }}
-
-        transition={{
-          repeat: Infinity,
-          duration: 4
-        }}
-
       >
+        AI BUILDER
+      </motion.h1>
 
-        <h1 className="text-8xl font-black">
-          AI BUILDER
-        </h1>
-
-      </motion.div>
-
+      <motion.p
+        initial={{opacity:0}}
+        animate={{opacity:1}}
+        transition={{delay:1}}
+        style={{
+          marginTop:"20px",
+          opacity:0.7,
+          fontSize:"1.2rem"
+        }}
+      >
+        Universal cinematic website generation engine
+      </motion.p>
     </section>
-
   )
-
 }
 `
 )
 
-createFile(
-  "components/cinematic/GlitchOverlay.tsx",
+save(
+  "app/components/game/GlitchOverlay.jsx",
   `
-export default function GlitchOverlay() {
+"use client"
 
-  return (
-    <div>
-      Glitch Overlay
+import { useBuilderStore } from "../../store/useBuilderStore"
+
+export default function GlitchOverlay(){
+
+  const glitch = useBuilderStore(s=>s.glitch)
+
+  if(!glitch) return null
+
+  return(
+    <div
+      style={{
+        position:"fixed",
+        inset:0,
+        background:
+          "repeating-linear-gradient(0deg,#ff000022 0px,#000 2px,#000 4px)",
+        mixBlendMode:"screen",
+        pointerEvents:"none",
+        zIndex:9999,
+        animation:"flicker .1s infinite"
+      }}
+    />
+  )
+}
+`
+)
+
+save(
+  "app/games/glade-run/Game.jsx",
+  `
+"use client"
+
+import { useState } from "react"
+import { useBuilderStore } from "../../store/useBuilderStore"
+
+export default function Game(){
+
+  const [dead,setDead] = useState(false)
+
+  const setGlitch = useBuilderStore(s=>s.setGlitch)
+
+  function lose(){
+
+    setDead(true)
+
+    setGlitch(true)
+
+    setTimeout(()=>{
+      setGlitch(false)
+      setDead(false)
+    },3000)
+  }
+
+  return(
+    <div
+      style={{
+        marginTop:"60px",
+        display:"flex",
+        flexDirection:"column",
+        alignItems:"center"
+      }}
+    >
+      <button
+        onClick={lose}
+        style={{
+          padding:"20px 40px",
+          background:"#111",
+          color:"white",
+          border:"1px solid #333",
+          cursor:"pointer",
+          fontSize:"1rem"
+        }}
+      >
+        Simulate Death
+      </button>
+
+      {dead && (
+        <h2 style={{marginTop:"30px"}}>
+          PLAYER TERMINATED
+        </h2>
+      )}
     </div>
   )
-
 }
 `
 )
 
-createFile(
-  "components/ui/Button.tsx",
+save(
+  "app/page.jsx",
   `
-export default function Button({
-  children
-}) {
+"use client"
 
-  return (
+import Hero from "./components/layout/Hero"
+import Game from "./games/glade-run/Game"
+import GlitchOverlay from "./components/game/GlitchOverlay"
 
-    <button className="px-6 py-3 rounded-xl bg-white text-black">
+export default function Home(){
 
-      {children}
+  return(
+    <>
+      <GlitchOverlay />
 
-    </button>
-
+      <main>
+        <Hero />
+        <Game />
+      </main>
+    </>
   )
-
 }
 `
 )
 
-//
-// SYSTEMS
-//
-
-createFile(
-  "systems/semanticEngine.ts",
-  `
-export function analyzeIntent(prompt) {
-
-  const lower = prompt.toLowerCase()
-
-  if(lower.includes("dashboard")) {
-    return "dashboard"
-  }
-
-  if(lower.includes("game")) {
-    return "game"
-  }
-
-  if(lower.includes("ai")) {
-    return "ai-app"
-  }
-
-  return "cinematic"
-
-}
-`
-)
-
-createFile(
-  "systems/websiteGenerator.ts",
-  `
-import { analyzeIntent } from "./semanticEngine"
-
-export async function generateWebsite(prompt) {
-
-  const type = analyzeIntent(prompt)
-
-  return {
-
-    type,
-
-    pages: [
-      "home",
-      "about",
-      "dashboard"
-    ],
-
-    animations: true,
-
-    cinematic: true
-
-  }
-
-}
-`
-)
-
-createFile(
-  "systems/deployEngine.ts",
-  `
-export async function deployProject(name) {
-
-  return {
-
-    success: true,
-
-    url: "https://example.pages.dev/" + name
-
-  }
-
-}
-`
-)
-
-createFile(
-  "systems/discordEngine.ts",
-  `
-export async function processDiscordPrompt(prompt) {
-
-  return {
-    success: true
-  }
-
-}
-`
-)
-
-//
-// STORE
-//
-
-createFile(
-  "store/appStore.ts",
-  `
-import { create } from "zustand"
-
-export const useAppStore = create((set) => ({
-
-  theme: "dark",
-
-  setTheme: (theme) => set({
-    theme
-  })
-
-}))
-`
-)
-
-//
-// TEMPLATES
-//
-
-createFile(
-  "templates/saas.ts",
-  `
-export const saasTemplate = {
-
-  hero: true,
-
-  pricing: true,
-
-  dashboard: true
-
-}
-`
-)
-
-createFile(
-  "templates/cinematic.ts",
-  `
-export const cinematicTemplate = {
-
-  particles: true,
-
-  shaders: true,
-
-  animations: true
-
-}
-`
-)
-
-//
-// DISCORD BOT
-//
-
-createFile(
-  "discord-bot.js",
-  `
-const {
-  Client,
-  GatewayIntentBits
-} = require("discord.js")
-
-const client = new Client({
-
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
-
-})
-
-client.on("messageCreate", async (message) => {
-
-  if(message.author.bot) return
-
-  const prompt = message.content
-
-  message.reply(
-    "Generating website for: " + prompt
-  )
-
-})
-
-client.login(process.env.DISCORD_TOKEN)
-`
-)
-
-console.log("\\nAI BUILDER CREATED SUCCESSFULLY")
+console.log("")
+console.log("AI BUILDER CREATED")
+console.log("READY FOR CLOUDFLARE")
+console.log("")
