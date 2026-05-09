@@ -1,166 +1,78 @@
 package brain
 
 import (
+	"sort"
 	"strings"
 )
 
-func Synthesize(
-	query string,
-	texts []string,
-) string {
+type Chunk struct {
+	Text  string
+	Score int
+}
 
-	if len(texts) == 0 {
-		return "❌ Информация не найдена."
+func Score(query string, text string) int {
+	query = strings.ToLower(query)
+	text = strings.ToLower(text)
+
+	score := 0
+
+	words := strings.Fields(query)
+
+	for _, w := range words {
+		if strings.Contains(text, w) {
+			score += 10
+		}
 	}
 
-	queryLower :=
-		strings.ToLower(query)
+	score += len(text) / 300
 
-	// CLEAN TEXTS
+	return score
+}
 
-	cleaned := []string{}
+func Synthesize(query string, texts []string) string {
+
+	var chunks []Chunk
 
 	for _, t := range texts {
 
-		t = strings.ReplaceAll(t, "\n", " ")
-		t = strings.TrimSpace(t)
-
-		if len(t) < 40 {
+		if len(t) < 120 {
 			continue
 		}
 
-		lower := strings.ToLower(t)
+		s := Score(query, t)
 
-		// FILTER TRASH
+		chunks = append(chunks, Chunk{
+			Text:  t,
+			Score: s,
+		})
+	}
 
-		bad := []string{
-			"cookie",
-			"privacy",
-			"blocked",
-			"sign up",
-			"youtube",
-			"rutube",
-			"playlist",
-			"javascript",
-			"404",
-			"login",
+	sort.Slice(chunks, func(i, j int) bool {
+		return chunks[i].Score > chunks[j].Score
+	})
+
+	final := ""
+
+	limit := 0
+
+	for _, c := range chunks {
+
+		if limit >= 3 {
+			break
 		}
 
-		skip := false
-
-		for _, b := range bad {
-
-			if strings.Contains(lower, b) {
-				skip = true
-			}
-		}
-
-		if skip {
+		if strings.Contains(final, c.Text) {
 			continue
 		}
 
-		// ONLY SAME LANGUAGE STYLE
+		final += c.Text + "\n\n"
 
-		if isEnglish(queryLower) {
-
-			if containsRussian(t) {
-				continue
-			}
-
-		} else {
-
-			if containsEnglishHeavy(t) {
-				continue
-			}
-		}
-
-		cleaned = append(cleaned, t)
+		limit++
 	}
 
-	if len(cleaned) == 0 {
-		return "❌ Нормальная информация не найдена."
-	}
-
-	// KNOWLEDGE FUSION
-
-	final :=
-		"🌐 Ответ:\n\n"
-
-	used := map[string]bool{}
-
-	for _, t := range cleaned {
-
-		sentences :=
-			strings.Split(t, ".")
-
-		for _, s := range sentences {
-
-			s = strings.TrimSpace(s)
-
-			if len(s) < 35 {
-				continue
-			}
-
-			lower :=
-				strings.ToLower(s)
-
-			if used[lower] {
-				continue
-			}
-
-			used[lower] = true
-
-			final += s + ".\n\n"
-
-			if len(final) > 1400 {
-				return final
-			}
-		}
+	if final == "" {
+		return "Ничего не найдено."
 	}
 
 	return final
-}
-
-func containsRussian(s string) bool {
-
-	for _, r := range s {
-
-		if r >= 'А' && r <= 'я' {
-			return true
-		}
-	}
-
-	return false
-}
-
-func containsEnglishHeavy(s string) bool {
-
-	count := 0
-
-	for _, r := range s {
-
-		if (r >= 'A' && r <= 'Z') ||
-			(r >= 'a' && r <= 'z') {
-
-			count++
-		}
-	}
-
-	return count > 25
-}
-
-func isEnglish(s string) bool {
-
-	count := 0
-
-	for _, r := range s {
-
-		if (r >= 'A' && r <= 'Z') ||
-			(r >= 'a' && r <= 'z') {
-
-			count++
-		}
-	}
-
-	return count > 2
 }
