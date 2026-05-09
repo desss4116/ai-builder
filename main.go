@@ -3,119 +3,72 @@ package main
 import (
 	"ai-builder/brain"
 	"ai-builder/internet"
-	"ai-builder/memory"
-	"log"
+	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 func main() {
 
-	token := os.Getenv("DISCORD_TOKEN")
+	token :=
+		os.Getenv(
+			"DISCORD_TOKEN",
+		)
 
-	if token == "" {
-		log.Fatal("DISCORD_TOKEN not found")
-	}
-
-	session, err :=
+	dg, err :=
 		discordgo.New(
 			"Bot " + token,
 		)
 
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	session.Identify.Intents =
-		discordgo.IntentsGuildMessages |
-			discordgo.IntentsDirectMessages |
-			discordgo.IntentsMessageContent
+	dg.AddHandler(func(
+		s *discordgo.Session,
+		m *discordgo.MessageCreate,
+	) {
 
-	session.AddHandler(messageCreate)
+		if m.Author.Bot {
+			return
+		}
 
-	err = session.Open()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("AI Builder Online")
-
-	stop := make(chan os.Signal, 1)
-
-	signal.Notify(
-		stop,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		os.Interrupt,
-	)
-
-	<-stop
-
-	session.Close()
-}
-
-func messageCreate(
-	s *discordgo.Session,
-	m *discordgo.MessageCreate,
-) {
-
-	if m.Author.Bot {
-		return
-	}
-
-	query := m.Content
-
-	if query == "" {
-		return
-	}
-
-	_, _ = s.ChannelMessageSend(
-		m.ChannelID,
-		"🧠 Анализирую запрос...",
-	)
-
-	// INTERNET SEARCH
-
-	results :=
-		internet.LiveSearch(query)
-
-	if len(results) == 0 {
-
-		_, _ = s.ChannelMessageSend(
-			m.ChannelID,
-			"❌ Ничего не найдено.",
-		)
-
-		return
-	}
-
-	// AI SYNTHESIS
-
-	answer :=
-		brain.Synthesize(
-			query,
-			results,
-		)
-
-	// MEMORY
-
-	memory.Save(answer)
-
-	if len(answer) > 1900 {
-		answer = answer[:1900]
-	}
-
-	_, sendErr :=
 		s.ChannelMessageSend(
 			m.ChannelID,
-			answer,
+			"🧠 Анализирую запрос...",
 		)
 
-	if sendErr != nil {
-		log.Println(sendErr)
+		results :=
+			internet.Search(
+				m.Content,
+			)
+
+		answer :=
+			brain.Synthesize(
+				m.Content,
+				results,
+			)
+
+		msg :=
+			"🌐 Ответ:\n\n" +
+				answer
+
+		s.ChannelMessageSend(
+			m.ChannelID,
+			msg,
+		)
+	})
+
+	err = dg.Open()
+
+	if err != nil {
+		panic(err)
 	}
+
+	fmt.Println(
+		"AI Builder Online",
+	)
+
+	select {}
 }
