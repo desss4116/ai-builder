@@ -2,24 +2,57 @@
 "use client"
 
 import {useState} from "react"
-import useBuilderStore from "../store/builderStore"
-import {generateWebsite} from "../engine/generation/generator"
+
+import useBuilderStore
+from "../store/builderStore"
 
 export default function PromptBox(){
 
-  const [loading,setLoading] = useState(false)
+  const [loading,setLoading] =
+  useState(false)
 
-  const prompt = useBuilderStore(s=>s.prompt)
-  const setPrompt = useBuilderStore(s=>s.setPrompt)
-  const setGenerated = useBuilderStore(s=>s.setGenerated)
+  const prompt =
+  useBuilderStore(s=>s.prompt)
+
+  const generated =
+  useBuilderStore(s=>s.generated)
+
+  const setPrompt =
+  useBuilderStore(s=>s.setPrompt)
+
+  const setGenerated =
+  useBuilderStore(s=>s.setGenerated)
 
   async function handleGenerate(){
 
+    if(!prompt) return
+
     setLoading(true)
 
-    const result = await generateWebsite(prompt)
+    const response =
+    await fetch("/api/generate",{
 
-    setGenerated(result)
+      method:"POST",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body:JSON.stringify({
+        prompt
+      })
+    })
+
+    const data =
+    await response.json()
+
+    setGenerated(
+      JSON.stringify(
+        data,
+        null,
+        2
+      )
+    )
 
     setLoading(false)
   }
@@ -27,7 +60,7 @@ export default function PromptBox(){
   return (
     <section
       style={{
-        maxWidth:"1000px",
+        maxWidth:"1200px",
         margin:"auto",
         padding:"20px"
       }}
@@ -35,16 +68,18 @@ export default function PromptBox(){
 
       <textarea
         value={prompt}
-        onChange={(e)=>setPrompt(e.target.value)}
+        onChange={(e)=>
+          setPrompt(e.target.value)
+        }
         placeholder="Describe your website..."
         style={{
           width:"100%",
-          height:"220px",
+          height:"240px",
           background:"#111827",
-          color:"white",
           border:"none",
-          borderRadius:"20px",
-          padding:"20px",
+          borderRadius:"24px",
+          color:"white",
+          padding:"24px",
           fontSize:"18px"
         }}
       />
@@ -54,15 +89,19 @@ export default function PromptBox(){
         style={{
           width:"100%",
           marginTop:"20px",
-          padding:"20px",
-          borderRadius:"20px",
+          padding:"22px",
           border:"none",
+          borderRadius:"24px",
           background:"#2563eb",
           color:"white",
-          fontSize:"20px"
+          fontSize:"22px"
         }}
       >
-        {loading ? "Generating..." : "Generate Website"}
+        {
+          loading
+          ? "Generating..."
+          : "Generate Website"
+        }
       </button>
 
     </section>

@@ -1,57 +1,27 @@
 
-import {analyzePrompt} from "../reasoning/analyzer"
+export async function generateWebsite(
+  prompt
+){
 
-export async function generateWebsite(prompt){
+  return {
 
-  const analysis = analyzePrompt(prompt)
+    success:true,
 
-  await new Promise(r=>setTimeout(r,1200))
+    architecture:{
+      frontend:"Next.js 14",
+      styling:"Tailwind CSS",
+      animation:"Framer Motion",
+      gameEngine:"Three.js + PixiJS",
+      state:"Zustand"
+    },
 
-  return `
-
-========================================
-
-AI WEBSITE GENERATED
-
-========================================
-
-PROMPT:
-${prompt}
-
-========================================
-
-TYPE:
-${analysis.type}
-
-STYLE:
-${analysis.style}
-
-========================================
-
-SECTIONS
-
-- Navbar
-- Hero
-- Features
-- Testimonials
-- Pricing
-- Footer
-
-========================================
-
-AI COMPONENTS
-
-- Dynamic UI
-- Responsive Layout
-- SEO Structure
-- Modern Design
-- Smart Content Blocks
-
-========================================
-
-STATUS:
-ONLINE
-
-========================================
-`
+    features:[
+      "3D Cinematic Landing",
+      "Procedural Maze",
+      "Infinite Runner",
+      "Dynamic UI",
+      "AI Systems",
+      "Glitch Effects"
+    ]
+  }
 }

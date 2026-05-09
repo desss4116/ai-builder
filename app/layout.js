@@ -2,8 +2,8 @@
 import "./globals.css"
 
 export const metadata = {
-  title:"AI Builder",
-  description:"Autonomous Website Intelligence System"
+  title:"AI Builder Omega",
+  description:"Autonomous Website Factory"
 }
 
 export default function RootLayout({children}){

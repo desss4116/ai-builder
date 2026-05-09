@@ -1,11 +1,13 @@
 
 "use client"
 
-import useBuilderStore from "../store/builderStore"
+import useBuilderStore
+from "../store/builderStore"
 
 export default function Preview(){
 
-  const generated = useBuilderStore(s=>s.generated)
+  const generated =
+  useBuilderStore(s=>s.generated)
 
   return (
     <section
@@ -15,26 +17,27 @@ export default function Preview(){
     >
 
       <div
+        className="glass"
         style={{
-          background:"#111827",
-          borderRadius:"20px",
+          borderRadius:"24px",
           padding:"30px",
-          minHeight:"400px"
+          minHeight:"500px"
         }}
       >
 
         <h2
           style={{
-            marginBottom:"20px"
+            marginBottom:"20px",
+            fontSize:"32px"
           }}
         >
-          Live Preview
+          AI Output
         </h2>
 
         <pre
           style={{
             whiteSpace:"pre-wrap",
-            lineHeight:"1.6",
+            lineHeight:"1.8",
             opacity:0.85
           }}
         >
