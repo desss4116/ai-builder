@@ -1,787 +1,746 @@
 /*========================================
-AI BUILDER OMEGA ULTRA BOOTSTRAP
-WCKD OS TERMINAL GENESIS
+WCKD OMEGA COGNITIVE CORE
 ========================================*/
 
-const fs = require("fs")
-const path = require("path")
-
-function ensure(dir){
-
-  if(!fs.existsSync(dir)){
-
-    fs.mkdirSync(
-      dir,
-      {recursive:true}
-    )
-  }
-}
-
-function write(file,content){
-
-  ensure(path.dirname(file))
-
-  fs.writeFileSync(
-    file,
-    content
-  )
-
-  console.log("CREATED:",file)
-}
-
-/*========================================
-ROOT STRUCTURE
-========================================*/
-
-const folders = [
-
-  "app",
-  "app/api",
-  "app/api/chat",
-  "app/api/generate",
-  "app/api/research",
-
-  "components",
-  "components/wckd",
-  "components/three",
-  "components/game",
-  "components/ui",
-
-  "engine",
-  "engine/ai",
-  "engine/runtime",
-  "engine/generation",
-  "engine/research",
-  "engine/deployment",
-
-  "store",
-
-  "public",
-  "styles",
-
-  "runtime",
-  "runtime/projects",
-
-  "discord",
-
-  "lib"
-]
-
-folders.forEach(ensure)
-
-/*========================================
-PACKAGE.JSON
-========================================*/
-
-write(
-  "package.json",
-`
-{
-  "name":"ai-builder-omega-ultra",
-  "private":true,
-  "version":"1.0.0",
-
-  "scripts":{
-
-    "dev":"next dev",
-
-    "build":"next build",
-
-    "start":"next start"
-  },
-
-  "dependencies":{
-
-    "next":"14.2.5",
-
-    "react":"18.2.0",
-
-    "react-dom":"18.2.0",
-
-    "three":"^0.164.1",
-
-    "@react-three/fiber":"^8.16.8",
-
-    "@react-three/drei":"^9.105.6",
-
-    "framer-motion":"^11.2.10",
-
-    "zustand":"^4.5.2",
-
-    "gsap":"^3.12.5",
-
-    "discord.js":"^14.15.3"
-  }
-}
-`
-)
-
-/*========================================
-NEXT CONFIG
-========================================*/
-
-write(
-  "next.config.js",
-`
-/** @type {import('next').NextConfig} */
-
-const nextConfig = {
-
-  reactStrictMode:true
-}
-
-module.exports = nextConfig
-`
-)
-
-/*========================================
-GLOBAL CSS
-========================================*/
-
-write(
-  "app/globals.css",
-`
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-
-html,
-body{
-
-  background:#050816;
-
-  color:white;
-
-  font-family:Arial;
-
-  overflow:hidden;
-}
-
-body::before{
-
-  content:"";
-
-  position:fixed;
-
-  inset:0;
-
-  pointer-events:none;
-
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      rgba(255,255,255,0.03),
-      rgba(255,255,255,0.03) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-
-  mix-blend-mode:overlay;
-
-  opacity:0.25;
-}
-
-.glitch{
-
-  position:relative;
-}
-
-.glitch::before,
-.glitch::after{
-
-  content:attr(data-text);
-
-  position:absolute;
-
-  left:0;
-
-  top:0;
-
-  width:100%;
-
-  overflow:hidden;
-}
-
-.glitch::before{
-
-  transform:translateX(-2px);
-
-  color:#00ffee;
-
-  opacity:0.6;
-}
-
-.glitch::after{
-
-  transform:translateX(2px);
-
-  color:#ff0055;
-
-  opacity:0.6;
-}
-`
-)
-
-/*========================================
-ROOT LAYOUT
-========================================*/
-
-write(
-  "app/layout.js",
-`
-import "./globals.css"
-
-export const metadata = {
-
-  title:"WCKD OS",
-
-  description:"Maze Runner Experience"
-}
-
-export default function RootLayout({children}){
-
-  return (
-
-    <html lang="en">
-
-      <body>
-
-        {children}
-
-      </body>
-
-    </html>
-  )
-}
-`
-)
-
-/*========================================
-ZUSTAND STORE
-========================================*/
-
-write(
-  "store/gameStore.js",
-`
 "use client"
 
-import {create} from "zustand"
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+  Suspense,
+} from "react"
 
-const useGameStore = create((set)=>({
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card"
 
-  energy:100,
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table"
 
-  level:1,
-
-  mode:"DIRECTOR",
-
-  glitch:false,
-
-  discoveredSecrets:[],
-
-  setEnergy:(energy)=>set({energy}),
-
-  setLevel:(level)=>set({level}),
-
-  setMode:(mode)=>set({mode}),
-
-  triggerGlitch:()=>{
-
-    set({glitch:true})
-
-    setTimeout(()=>{
-
-      set({glitch:false})
-
-    },500)
-  },
-
-  unlockSecret:(secret)=>set(state=>({
-
-    discoveredSecrets:[
-      ...state.discoveredSecrets,
-      secret
-    ]
-  }))
-}))
-
-export default useGameStore
-`
-)
+import { motion } from "framer-motion"
 
 /*========================================
-AI ENGINE
+TOKENIZER
 ========================================*/
 
-write(
-  "engine/ai/reasoner.js",
-`
-export async function reason(query){
+const STOP_WORDS = new Set([
+  "the","a","an","and","or","of","to","in","on","at","is",
+  "are","was","were","be","been","this","that","with",
+  "for","from","as","by","it","its","into","about",
+  "what","which","who","whom","their","them","they",
+  "you","your","our","ours","i","me","my","mine"
+])
 
-  const lower = query.toLowerCase()
-
-  let category = "general"
-
-  if(lower.includes("maze")){
-
-    category = "maze"
-  }
-
-  if(lower.includes("game")){
-
-    category = "game"
-  }
-
-  if(lower.includes("website")){
-
-    category = "website"
-  }
-
-  return {
-
-    success:true,
-
-    category,
-
-    response:
-      "WCKD AI analyzed your request and generated tactical response.",
-
-    recommendations:[
-
-      "Enable cinematic mode",
-
-      "Activate procedural systems",
-
-      "Increase immersion layer"
-    ]
-  }
+export function normalizeText(input = "") {
+  return input
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
 }
-`
-)
+
+export function tokenize(text = "") {
+  return normalizeText(text)
+    .split(" ")
+    .filter(Boolean)
+    .filter(word => !STOP_WORDS.has(word))
+}
 
 /*========================================
-RESEARCH ENGINE
+BM25 ENGINE
 ========================================*/
 
-write(
-  "engine/research/search.js",
-`
-export async function searchInternet(query){
+export class BM25Engine {
 
-  return {
+  constructor(documents = [], k1 = 1.5, b = 0.75) {
+    this.documents = documents
+    this.k1 = k1
+    this.b = b
 
-    success:true,
+    this.docLengths = []
+    this.avgDocLength = 0
 
-    query,
+    this.termFreqs = []
+    this.documentFreqs = new Map()
 
-    results:[
+    this.initialize()
+  }
 
-      {
+  initialize() {
 
-        title:"WCKD Research Result",
+    let totalLength = 0
 
-        snippet:
-          "Advanced cinematic systems initialized."
+    for (const doc of this.documents) {
+
+      const tokens = tokenize(doc)
+
+      totalLength += tokens.length
+
+      this.docLengths.push(tokens.length)
+
+      const frequencies = new Map()
+
+      for (const token of tokens) {
+        frequencies.set(
+          token,
+          (frequencies.get(token) || 0) + 1
+        )
       }
-    ]
-  }
-}
-`
-)
 
-/*========================================
-GENERATION ENGINE
-========================================*/
+      this.termFreqs.push(frequencies)
 
-write(
-  "engine/generation/generator.js",
-`
-export async function generateProject(prompt){
+      const unique = new Set(tokens)
 
-  return {
-
-    success:true,
-
-    project:"maze-runner",
-
-    deployment:
-      "https://maze-runner.pages.dev",
-
-    features:[
-
-      "Three.js Maze",
-
-      "WCKD UI",
-
-      "Glitch Effects",
-
-      "AI Runtime",
-
-      "Director Mode"
-    ]
-  }
-}
-`
-)
-
-/*========================================
-THREE MAZE
-========================================*/
-
-write(
-  "components/three/MazeScene.js",
-`
-"use client"
-
-import {Canvas,useFrame} from "@react-three/fiber"
-
-import {OrbitControls} from "@react-three/drei"
-
-import {useRef} from "react"
-
-function MazeWall(props){
-
-  return (
-
-    <mesh {...props}>
-
-      <boxGeometry args={[1,2,1]} />
-
-      <meshStandardMaterial color="#00ffee" />
-
-    </mesh>
-  )
-}
-
-function Player(){
-
-  const ref = useRef()
-
-  useFrame(()=>{
-
-    if(ref.current){
-
-      ref.current.rotation.y += 0.01
-    }
-  })
-
-  return (
-
-    <mesh
-      ref={ref}
-      position={[0,0.5,0]}
-    >
-
-      <sphereGeometry args={[0.3,32,32]} />
-
-      <meshStandardMaterial color="#ffffff" />
-
-    </mesh>
-  )
-}
-
-export default function MazeScene(){
-
-  const walls = []
-
-  for(let x=-5;x<5;x++){
-
-    for(let z=-5;z<5;z++){
-
-      if(Math.random()>0.7){
-
-        walls.push(
-
-          <MazeWall
-            key={x+"-"+z}
-            position={[x,1,z]}
-          />
+      for (const token of unique) {
+        this.documentFreqs.set(
+          token,
+          (this.documentFreqs.get(token) || 0) + 1
         )
       }
     }
+
+    this.avgDocLength =
+      totalLength / Math.max(1, this.documents.length)
+  }
+
+  idf(term) {
+
+    const df =
+      this.documentFreqs.get(term) || 0
+
+    const N = this.documents.length
+
+    return Math.log(
+      1 +
+      (
+        (N - df + 0.5) /
+        (df + 0.5)
+      )
+    )
+  }
+
+  score(query, documentIndex) {
+
+    const queryTokens = tokenize(query)
+
+    const frequencies =
+      this.termFreqs[documentIndex]
+
+    const docLength =
+      this.docLengths[documentIndex]
+
+    let score = 0
+
+    for (const term of queryTokens) {
+
+      const tf =
+        frequencies.get(term) || 0
+
+      const idf = this.idf(term)
+
+      const numerator =
+        tf * (this.k1 + 1)
+
+      const denominator =
+        tf +
+        this.k1 *
+        (
+          1 -
+          this.b +
+          this.b *
+          (docLength / this.avgDocLength)
+        )
+
+      score +=
+        idf *
+        (numerator / Math.max(1, denominator))
+    }
+
+    return score
+  }
+
+  search(query, limit = 5) {
+
+    const results = this.documents.map(
+      (doc, index) => ({
+        index,
+        score: this.score(query, index),
+        document: doc,
+      })
+    )
+
+    return results
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+  }
+}
+
+/*========================================
+DOM DENSITY EXTRACTION
+========================================*/
+
+export class DOMDensityExtractor {
+
+  constructor(html = "") {
+    this.html = html
+  }
+
+  extractBlocks() {
+
+    const regex =
+      /<([a-zA-Z0-9]+)(.*?)>(.*?)<\/\1>/gs
+
+    const blocks = []
+
+    let match
+
+    while ((match = regex.exec(this.html)) !== null) {
+
+      const tag = match[1]
+      const content = match[3]
+
+      const clean =
+        content
+          .replace(/<[^>]*>/g, "")
+          .replace(/\s+/g, " ")
+          .trim()
+
+      const tagCount =
+        (content.match(/<[^>]+>/g) || []).length
+
+      const charCount =
+        clean.length
+
+      const density =
+        charCount / Math.max(1, tagCount)
+
+      blocks.push({
+        tag,
+        density,
+        text: clean,
+      })
+    }
+
+    return blocks
+  }
+
+  extractMainContent(threshold = 120) {
+
+    const blocks = this.extractBlocks()
+
+    const useful =
+      blocks.filter(
+        block =>
+          block.density >= threshold &&
+          block.text.length > 80
+      )
+
+    return useful
+      .map(x => x.text)
+      .join("\n\n")
+  }
+}
+
+/*========================================
+KNOWLEDGE GRAPH
+========================================*/
+
+export class KnowledgeGraph {
+
+  constructor() {
+    this.nodes = new Map()
+    this.edges = new Map()
+  }
+
+  ensureNode(node) {
+
+    if (!this.nodes.has(node)) {
+      this.nodes.set(node, {
+        id: node,
+        createdAt: Date.now(),
+      })
+    }
+
+    if (!this.edges.has(node)) {
+      this.edges.set(node, [])
+    }
+  }
+
+  addTriple(subject, predicate, object) {
+
+    this.ensureNode(subject)
+    this.ensureNode(object)
+
+    this.edges.get(subject).push({
+      predicate,
+      object,
+      timestamp: Date.now(),
+    })
+  }
+
+  getRelations(node) {
+
+    return this.edges.get(node) || []
+  }
+
+  search(query) {
+
+    const results = []
+
+    for (const [subject, relations] of this.edges.entries()) {
+
+      for (const relation of relations) {
+
+        const blob =
+          `${subject} ${relation.predicate} ${relation.object}`
+
+        if (
+          normalizeText(blob)
+            .includes(normalizeText(query))
+        ) {
+          results.push({
+            subject,
+            predicate: relation.predicate,
+            object: relation.object,
+          })
+        }
+      }
+    }
+
+    return results
+  }
+
+  shortestPath(start, end) {
+
+    const queue = [[start]]
+    const visited = new Set()
+
+    while (queue.length > 0) {
+
+      const path = queue.shift()
+
+      const node =
+        path[path.length - 1]
+
+      if (node === end) {
+        return path
+      }
+
+      if (!visited.has(node)) {
+
+        visited.add(node)
+
+        const relations =
+          this.getRelations(node)
+
+        for (const relation of relations) {
+
+          queue.push([
+            ...path,
+            relation.object,
+          ])
+        }
+      }
+    }
+
+    return null
+  }
+}
+
+/*========================================
+ATOMIC UI DISPATCHER
+========================================*/
+
+function TimelineComponent({ data }) {
+
+  return (
+    <Card className="bg-black text-cyan-400 border-cyan-800">
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          {data.map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="border-l border-cyan-600 pl-4"
+            >
+              <div className="text-sm opacity-60">
+                {item.date}
+              </div>
+              <div className="font-bold">
+                {item.label}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function MapComponent({ data }) {
+
+  return (
+    <Card className="bg-black text-green-400 border-green-700">
+      <CardContent className="p-4">
+        <div className="grid grid-cols-10 gap-1">
+          {data.map((point, i) => (
+            <div
+              key={i}
+              className="w-4 h-4 rounded-full bg-green-500 animate-pulse"
+              style={{
+                transform:
+                  `translate(${point.x}px, ${point.y}px)`
+              }}
+            />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function DataTable({ data }) {
+
+  const headers =
+    Object.keys(data[0] || {})
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {headers.map(header => (
+            <TableHead key={header}>
+              {header}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+
+      <TableBody>
+        {data.map((row, i) => (
+          <TableRow key={i}>
+            {headers.map(header => (
+              <TableCell key={header}>
+                {String(row[header])}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
+
+export function AtomicUIDispatcher({ payload }) {
+
+  const type =
+    useMemo(() => {
+
+      if (
+        Array.isArray(payload) &&
+        payload.length > 0
+      ) {
+
+        const sample = payload[0]
+
+        if (
+          typeof sample.x === "number" &&
+          typeof sample.y === "number"
+        ) {
+          return "map"
+        }
+
+        if (
+          sample.date &&
+          sample.label
+        ) {
+          return "timeline"
+        }
+
+        if (
+          typeof sample === "object"
+        ) {
+          return "table"
+        }
+      }
+
+      return "unknown"
+
+    }, [payload])
+
+  if (type === "map") {
+    return <MapComponent data={payload} />
+  }
+
+  if (type === "timeline") {
+    return <TimelineComponent data={payload} />
+  }
+
+  if (type === "table") {
+    return <DataTable data={payload} />
   }
 
   return (
+    <Card className="bg-zinc-950 text-zinc-200">
+      <CardContent className="p-6">
+        Unsupported Payload
+      </CardContent>
+    </Card>
+  )
+}
 
-    <Canvas camera={{position:[0,8,10]}}>
+/*========================================
+WCKD SEARCH CORE
+========================================*/
 
-      <ambientLight intensity={0.5} />
+export class WCKDBrain {
 
-      <pointLight
-        position={[10,10,10]}
-        intensity={2}
+  constructor() {
+
+    this.documents = []
+
+    this.graph =
+      new KnowledgeGraph()
+  }
+
+  ingestDocument(text) {
+
+    this.documents.push(text)
+  }
+
+  buildSemanticEngine() {
+
+    return new BM25Engine(
+      this.documents
+    )
+  }
+
+  learnTriple(s, p, o) {
+
+    this.graph.addTriple(s, p, o)
+  }
+
+  ask(query) {
+
+    const semantic =
+      this.buildSemanticEngine()
+
+    const ranked =
+      semantic.search(query)
+
+    const graph =
+      this.graph.search(query)
+
+    return {
+      ranked,
+      graph,
+    }
+  }
+}
+
+/*========================================
+LIVE DEMO COMPONENT
+========================================*/
+
+export default function WCKDOmegaDemo() {
+
+  const [query, setQuery] =
+    useState("maze runner")
+
+  const brainRef =
+    useRef(null)
+
+  useEffect(() => {
+
+    const brain =
+      new WCKDBrain()
+
+    brain.ingestDocument(
+      "Maze Runner contains procedural labyrinth systems and WCKD experiments."
+    )
+
+    brain.ingestDocument(
+      "Three.js powers cinematic WebGL experiences."
+    )
+
+    brain.ingestDocument(
+      "Framer Motion creates immersive UI transitions."
+    )
+
+    brain.learnTriple(
+      "WCKD",
+      "controls",
+      "The Maze"
+    )
+
+    brain.learnTriple(
+      "Thomas",
+      "escaped",
+      "The Glade"
+    )
+
+    brain.learnTriple(
+      "Minho",
+      "mapped",
+      "Maze Corridors"
+    )
+
+    brainRef.current = brain
+
+  }, [])
+
+  const results =
+    useMemo(() => {
+
+      if (!brainRef.current) {
+        return null
+      }
+
+      return brainRef.current.ask(query)
+
+    }, [query])
+
+  const timelineData = [
+    {
+      date: "2026",
+      label: "WCKD System Activated",
+    },
+    {
+      date: "2027",
+      label: "Maze Protocol Initialized",
+    },
+  ]
+
+  const mapData = [
+    { x: 10, y: 20 },
+    { x: 30, y: 50 },
+    { x: 90, y: 80 },
+  ]
+
+  return (
+    <div className="min-h-screen bg-black text-cyan-400 p-10 space-y-10">
+
+      <motion.h1
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-5xl font-black tracking-widest"
+      >
+        WCKD OMEGA BRAIN
+      </motion.h1>
+
+      <input
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        className="
+          bg-zinc-900
+          border
+          border-cyan-700
+          px-4
+          py-3
+          w-full
+          rounded-xl
+        "
       />
 
-      {walls}
+      <div className="grid grid-cols-2 gap-8">
 
-      <Player />
+        <Card className="bg-zinc-950 border-cyan-900">
+          <CardContent className="p-6">
+            <div className="text-2xl mb-4">
+              Semantic Results
+            </div>
 
-      <OrbitControls />
+            <div className="space-y-4">
 
-    </Canvas>
-  )
-}
-`
-)
+              {results?.ranked.map((r, i) => (
+                <div
+                  key={i}
+                  className="border border-cyan-800 p-4 rounded-xl"
+                >
+                  <div className="text-sm opacity-60">
+                    SCORE:
+                    {" "}
+                    {r.score.toFixed(4)}
+                  </div>
 
-/*========================================
-WCKD TERMINAL UI
-========================================*/
+                  <div>
+                    {r.document}
+                  </div>
+                </div>
+              ))}
 
-write(
-  "components/wckd/TerminalOverlay.js",
-`
-"use client"
+            </div>
+          </CardContent>
+        </Card>
 
-import {motion} from "framer-motion"
+        <Card className="bg-zinc-950 border-green-900">
+          <CardContent className="p-6">
+            <div className="text-2xl mb-4">
+              Knowledge Graph
+            </div>
 
-import useGameStore from "../../store/gameStore"
+            <div className="space-y-3">
 
-export default function TerminalOverlay(){
+              {results?.graph.map((g, i) => (
+                <div
+                  key={i}
+                  className="
+                    border
+                    border-green-800
+                    rounded-xl
+                    p-4
+                  "
+                >
+                  <span className="text-cyan-400">
+                    {g.subject}
+                  </span>
 
-  const glitch = useGameStore(s=>s.glitch)
+                  {" "}
+                  →
+                  {" "}
 
-  const energy = useGameStore(s=>s.energy)
+                  <span className="text-pink-400">
+                    {g.predicate}
+                  </span>
 
-  const level = useGameStore(s=>s.level)
+                  {" "}
+                  →
+                  {" "}
 
-  return (
+                  <span className="text-green-400">
+                    {g.object}
+                  </span>
+                </div>
+              ))}
 
-    <motion.div
-
-      animate={{
-        opacity:glitch ? 0.4 : 1
-      }}
-
-      style={{
-
-        position:"fixed",
-
-        inset:0,
-
-        pointerEvents:"none",
-
-        padding:"20px",
-
-        display:"flex",
-
-        flexDirection:"column",
-
-        justifyContent:"space-between"
-      }}
-    >
-
-      <div>
-
-        <h1
-          className="glitch"
-          data-text="WCKD TERMINAL"
-          style={{
-
-            fontSize:"42px",
-
-            color:"#00ffee"
-          }}
-        >
-          WCKD TERMINAL
-        </h1>
-
-      </div>
-
-      <div>
-
-        <div>ENERGY: {energy}</div>
-
-        <div>LEVEL: {level}</div>
-
-        <div>STATUS: ONLINE</div>
+            </div>
+          </CardContent>
+        </Card>
 
       </div>
 
-    </motion.div>
+      <div className="grid grid-cols-2 gap-8">
+
+        <AtomicUIDispatcher
+          payload={timelineData}
+        />
+
+        <AtomicUIDispatcher
+          payload={mapData}
+        />
+
+      </div>
+
+    </div>
   )
-}
-`
-)
-
-/*========================================
-HOME PAGE
-========================================*/
-
-write(
-  "app/page.js",
-`
-"use client"
-
-import dynamic from "next/dynamic"
-
-import TerminalOverlay
-from "../components/wckd/TerminalOverlay"
-
-const MazeScene = dynamic(
-
-  ()=>import("../components/three/MazeScene"),
-
-  {ssr:false}
-)
-
-export default function Home(){
-
-  return (
-
-    <main
-      style={{
-        width:"100vw",
-        height:"100vh"
-      }}
-    >
-
-      <MazeScene />
-
-      <TerminalOverlay />
-
-    </main>
-  )
-}
-`
-)
-
-/*========================================
-CHAT API
-========================================*/
-
-write(
-  "app/api/chat/route.js",
-`
-import {reason}
-from "../../../engine/ai/reasoner"
-
-export async function POST(req){
-
-  const body = await req.json()
-
-  const result = await reason(body.message)
-
-  return Response.json(result)
-}
-`
-)
-
-/*========================================
-GENERATION API
-========================================*/
-
-write(
-  "app/api/generate/route.js",
-`
-import {generateProject}
-from "../../../engine/generation/generator"
-
-export async function POST(req){
-
-  const body = await req.json()
-
-  const result =
-    await generateProject(body.prompt)
-
-  return Response.json(result)
-}
-`
-)
-
-/*========================================
-DISCORD BOT
-========================================*/
-
-write(
-  "discord/bot.js",
-`
-const {
-  Client,
-  GatewayIntentBits
-} = require("discord.js")
-
-const client = new Client({
-
-  intents:[
-
-    GatewayIntentBits.Guilds,
-
-    GatewayIntentBits.GuildMessages,
-
-    GatewayIntentBits.MessageContent
-  ]
-})
-
-client.on("ready",()=>{
-
-  console.log("WCKD AI ONLINE")
-})
-
-client.on("messageCreate",async(message)=>{
-
-  if(message.author.bot) return
-
-  const query = message.content
-
-  if(query.toLowerCase().includes("create")){
-
-    return message.reply(\`
-
-🧠 WEBSITE GENERATED
-
-PROJECT:
-Maze Runner Experience
-
-FEATURES:
-• 3D Maze
-• WCKD UI
-• Procedural Systems
-• Director Mode
-• Glitch Overlay
-
-DEPLOYED:
-https://maze-runner.pages.dev
-
-\`)
-  }
-
-  return message.reply(
-
-    "WCKD AI analyzed your request."
-  )
-})
-
-client.login(process.env.DISCORD_TOKEN)
-`
-)
-
-/*========================================
-README
-========================================*/
-
-write(
-  "README.md",
-`
-# WCKD OS TERMINAL GENESIS
-
-AAA CINEMATIC MAZE RUNNER EXPERIENCE
-
-FEATURES:
-
-- THREE.JS
-- R3F
-- WCKD UI
-- GLITCH FX
-- ZUSTAND
-- FRAMER MOTION
-- AI ENGINE
-- DISCORD BOT
-`
-)
-
-console.log(
-  "WCKD OS GENERATED SUCCESSFULLY"
-)
+        }
