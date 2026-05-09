@@ -18,7 +18,9 @@ func main() {
 		log.Fatal("DISCORD_TOKEN not found")
 	}
 
-	session, err := discordgo.New("Bot " + token)
+	session, err := discordgo.New(
+		"Bot " + token,
+	)
 
 	if err != nil {
 		log.Fatal(err)
@@ -47,38 +49,36 @@ func messageCreate(
 	m *discordgo.MessageCreate,
 ) {
 
-	// ignore bots
 	if m.Author.Bot {
 		return
 	}
 
-	query := strings.TrimSpace(m.Content)
+	query := strings.TrimSpace(
+		m.Content,
+	)
 
 	if query == "" {
 		return
 	}
 
-	// thinking message
 	s.ChannelMessageSend(
 		m.ChannelID,
 		"🧠 Анализирую запрос...",
 	)
 
-	// internet search
-	raw := internet.Search(query)
+	// SEARCH
+	results := internet.Search(query)
 
-	// AI answer engine
-	answer := brain.GenerateAnswer(
+	// AI SYNTHESIS
+	answer := brain.Synthesize(
 		query,
-		raw,
+		results,
 	)
 
-	// discord message limit
 	if len(answer) > 1900 {
 		answer = answer[:1900]
 	}
 
-	// send answer
 	_, err := s.ChannelMessageSend(
 		m.ChannelID,
 		answer,
