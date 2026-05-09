@@ -2,6 +2,7 @@ package brain
 
 import (
 	"ai-builder/rag"
+	"strings"
 )
 
 func Synthesize(
@@ -44,17 +45,101 @@ func Synthesize(
 		return "❌ Информация не найдена."
 	}
 
-	mainText := texts[0]
+	// CLEANUP
 
-	// LANGUAGE
+	cleaned := []string{}
 
-	isRussian :=
-		DetectRussian(query)
+	for _, t := range texts {
 
-	if isRussian {
+		t = strings.ReplaceAll(
+			t,
+			"\n",
+			" ",
+		)
 
-		return "🌐 Ответ:\n\n" + mainText
+		t = strings.TrimSpace(t)
+
+		if len(t) < 50 {
+			continue
+		}
+
+		// REMOVE GARBAGE
+
+		bad := []string{
+			"youtube",
+			"rutube",
+			"playlist",
+			"sign up",
+			"privacy",
+			"cookie",
+			"blocked",
+			"jump to content",
+		}
+
+		skip := false
+
+		lower :=
+			strings.ToLower(t)
+
+		for _, b := range bad {
+
+			if strings.Contains(
+				lower,
+				b,
+			) {
+				skip = true
+			}
+		}
+
+		if skip {
+			continue
+		}
+
+		cleaned = append(
+			cleaned,
+			t,
+		)
 	}
 
-	return "🌐 Answer:\n\n" + mainText
+	if len(cleaned) == 0 {
+		return "❌ Нормальная информация не найдена."
+	}
+
+	// BUILD AI RESPONSE
+
+	final := "🌐 Ответ:\n\n"
+
+	used := map[string]bool{}
+
+	for _, t := range cleaned {
+
+		parts :=
+			strings.Split(
+				t,
+				".",
+			)
+
+		for _, p := range parts {
+
+			p = strings.TrimSpace(p)
+
+			if len(p) < 40 {
+				continue
+			}
+
+			if used[p] {
+				continue
+			}
+
+			used[p] = true
+
+			final += p + ".\n\n"
+
+			if len(final) > 1200 {
+				return final
+			}
+		}
+	}
+
+	return final
 }
