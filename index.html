@@ -1,302 +1,139 @@
-<!--
-AI BUILDER ULTIMATE
-MAZE RUNNER CINEMATIC GENERATION SYSTEM
-ULTRA FRONTEND ARCHITECTURE
--->
+<!DOCTYPE html>
 
-<script>
+<html lang="en">
 
-/*
-====================================================
-CINEMATIC WEBSITE DNA
-====================================================
-*/
+<head>
 
-function buildCinematicWebsite(prompt){
+<meta charset="UTF-8">
 
-return {
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-framework: [
+<title>AI Builder Ultimate</title>
 
-"Next.js",
-"React",
-"TypeScript",
+<script src="https://cdn.tailwindcss.com"></script>
 
-],
+<style>
 
-frontend: [
-
-"TailwindCSS",
-"Framer Motion",
-"GSAP",
-"Shadcn/UI",
-
-],
-
-graphics: [
-
-"Three.js",
-"React Three Fiber",
-"WebGL",
-"WebGPU",
-
-],
-
-games: [
-
-"PixiJS",
-"Babylon.js",
-"PlayCanvas",
-
-],
-
-backend: [
-
-"Node.js",
-"NestJS",
-"PostgreSQL",
-
-],
-
-ultra: [
-
-"WebAssembly",
-"WASM Physics",
-"Realtime Rendering",
-"Cinematic Effects",
-
-],
-
-design: [
-
-"Figma",
-"Blender",
-"Motion Design",
-"Dark Cinematic UI",
-
-],
-
-features: [
-
-"3D Maze",
-"Interactive Characters",
-"Movie Lore",
-"Animations",
-"Realtime Lighting",
-"Atmospheric Fog",
-"Character Pages",
-"Faction System",
-"Soundtrack Player",
-"Fan Community",
-"Lore Timeline",
-"Survival Dashboard",
-"Interactive Map",
-
-]
-
+body{
+background:#020617;
+color:white;
+font-family:Arial;
 }
 
+.card{
+background:#0f172a;
+border:1px solid #1e293b;
 }
 
-/*
-====================================================
-AI VISUAL ANALYZER
-====================================================
-*/
+</style>
 
-function analyzeMovie(prompt){
+</head>
 
-prompt = prompt.toLowerCase()
+<body class="p-10">
 
-if(prompt.includes("бегущий в лабиринте")){
-
-return {
-
-theme: "Maze Runner",
-
-colors: [
-
-"#0f172a",
-"#111827",
-"#1e293b",
-"#334155",
-
-],
-
-style: [
-
-"Cinematic",
-"Dark",
-"Mystery",
-"Post-Apocalyptic",
-
-],
-
-effects: [
-
-"Fog",
-"Rain",
-"Glowing Lights",
-"Particles",
-"Maze Animations",
-
-],
-
-layout: [
-
-"Hero Section",
-"Character Pages",
-"Interactive Maze",
-"Movie Timeline",
-"Survival Dashboard",
-
-]
-
-}
-
-}
-
-return {
-
-theme: "Universal",
-
-colors: [
-
-"#020617",
-
-],
-
-style: [
-
-"Modern",
-
-],
-
-effects: [
-
-"Smooth Animations",
-
-],
-
-layout: [
-
-"Landing Page",
-
-]
-
-}
-
-}
-
-/*
-====================================================
-AI WEBSITE GENERATOR
-====================================================
-*/
-
-function generatePerfectWebsite(prompt){
-
-const movie =
-analyzeMovie(prompt)
-
-const architecture =
-buildCinematicWebsite(prompt)
-
-return {
-
-title:
-movie.theme + " Ultimate Experience",
-
-description:
-"AI Generated Cinematic Fan Experience",
-
-theme:
-movie,
-
-architecture:
-architecture,
-
-}
-
-}
-
-/*
-====================================================
-ULTRA UI GENERATOR
-====================================================
-*/
-
-function renderMazeRunnerWebsite(){
-
-return `
-
-<section class="min-h-screen bg-black text-white p-10">
-
-<div class="max-w-7xl mx-auto">
-
-<h1 class="text-7xl font-black mb-6">
-THE MAZE RUNNER
+<h1 class="text-6xl font-black mb-6">
+AI Builder Ultimate
 </h1>
 
 <p class="text-slate-400 text-2xl mb-10">
-Interactive Cinematic Experience
+Maze Runner Cinematic Generator
+</p>
+
+<textarea
+id="prompt"
+class="w-full h-40 bg-slate-900 rounded-3xl p-6 mb-6"
+placeholder="Сделай сайт по Бегущему в лабиринте..."
+></textarea>
+
+<button
+onclick="generateSite()"
+class="bg-blue-500 px-8 py-4 rounded-2xl text-2xl"
+>
+Generate
+</button>
+
+<div
+id="output"
+class="mt-10"
+></div>
+
+<script>
+
+function generateSite(){
+
+const prompt =
+document.getElementById("prompt").value
+
+document.getElementById("output").innerHTML = `
+
+<section class="card p-10 rounded-3xl">
+
+<h2 class="text-5xl font-bold mb-6">
+THE MAZE RUNNER
+</h2>
+
+<p class="text-slate-400 text-xl mb-10">
+AI Generated Cinematic Experience
 </p>
 
 <div class="grid md:grid-cols-3 gap-6">
 
-<div class="bg-slate-900 p-8 rounded-3xl">
+<div class="bg-slate-900 p-6 rounded-3xl">
 
-<h2 class="text-3xl mb-4">
+<h3 class="text-3xl mb-4">
 3D Maze
-</h2>
+</h3>
 
 <p class="text-slate-400">
-Realtime WebGL Maze Exploration
+Interactive Three.js maze system
 </p>
 
 </div>
 
-<div class="bg-slate-900 p-8 rounded-3xl">
+<div class="bg-slate-900 p-6 rounded-3xl">
 
-<h2 class="text-3xl mb-4">
+<h3 class="text-3xl mb-4">
 Characters
-</h2>
+</h3>
 
 <p class="text-slate-400">
-Detailed Lore & Relationships
+Movie lore & survival profiles
 </p>
 
 </div>
 
-<div class="bg-slate-900 p-8 rounded-3xl">
+<div class="bg-slate-900 p-6 rounded-3xl">
 
-<h2 class="text-3xl mb-4">
-Survival System
-</h2>
+<h3 class="text-3xl mb-4">
+Dashboard
+</h3>
 
 <p class="text-slate-400">
-Realtime Mission Dashboard
+Realtime mission interface
 </p>
 
 </div>
 
 </div>
 
-<div class="mt-12 bg-slate-900 p-10 rounded-3xl">
+<div class="mt-10 bg-black border border-slate-700 h-[400px] rounded-3xl flex items-center justify-center">
 
-<h2 class="text-5xl mb-6">
-Interactive Maze Engine
-</h2>
-
-<div class="h-[500px] bg-black rounded-3xl border border-slate-700 flex items-center justify-center">
-
-<p class="text-slate-500 text-2xl">
-Three.js Maze Renderer
+<p class="text-slate-500 text-3xl">
+Three.js Cinematic Scene
 </p>
 
 </div>
 
-</div>
+<div class="mt-10">
+
+<h3 class="text-4xl mb-4">
+AI Analysis
+</h3>
+
+<p class="text-slate-400">
+Prompt:
+${prompt}
+</p>
 
 </div>
 
@@ -306,99 +143,8 @@ Three.js Maze Renderer
 
 }
 
-/*
-====================================================
-NEXT LEVEL AI DESIGN ENGINE
-====================================================
-*/
-
-function TailwindDesignDNA(){
-
-return {
-
-layout: [
-
-"Atomic Design",
-"Responsive Grid",
-"Cinematic Sections",
-"Glassmorphism",
-"Dark Theme",
-
-],
-
-animations: [
-
-"GSAP",
-"Framer Motion",
-"Parallax",
-"Realtime Effects",
-"Particles",
-
-],
-
-experience: [
-
-"Movie-Level UI",
-"AAA Interface",
-"Immersive Experience",
-
-]
-
-}
-
-}
-
-/*
-====================================================
-SELF OPTIMIZING HEURISTIC ENGINE
-====================================================
-*/
-
-function SelfOptimizingHeuristicInferenceEngine(){
-
-return {
-
-brain: [
-
-"BM25",
-"TF-IDF",
-"Cross Paragraph Scoring",
-
-],
-
-internet: [
-
-"DOM Density Analysis",
-"Contextual Pruning",
-
-],
-
-memory: [
-
-"Knowledge Graph",
-"Semantic Memory",
-"Relationship Mapping",
-
-],
-
-design: [
-
-"Tailwind DNA",
-"Component Intelligence",
-"Dynamic Layout Engine",
-
-],
-
-pipeline: [
-
-"Deterministic Cognitive Pipeline",
-"Recursive Semantic Middleware",
-"AHLC",
-
-]
-
-}
-
-}
-
 </script>
+
+</body>
+
+</html>
