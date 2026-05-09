@@ -1,34 +1,23 @@
-
 {
-  "name":"ai-builder-omega",
-  "version":"999.0.0",
-  "private":true,
-
-  "scripts":{
-    "dev":"next dev",
-    "build":"next build",
-    "start":"next start"
+  "name": "ai-builder-omega-ultra",
+  "version": "10.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
-
-  "dependencies":{
-
-    "next":"14.2.35",
-
-    "react":"18.2.0",
-    "react-dom":"18.2.0",
-
-    "zustand":"^4.5.2",
-
-    "framer-motion":"^11.2.10",
-
-    "three":"^0.164.1",
-    "@react-three/fiber":"^8.16.6",
-    "@react-three/drei":"^9.105.6",
-
-    "pixi.js":"^8.1.5",
-
-    "clsx":"^2.1.1",
-
-    "uuid":"^9.0.1"
+  "dependencies": {
+    "next": "14.2.35",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "zustand": "^4.5.2",
+    "uuid": "^9.0.1",
+    "clsx": "^2.1.1",
+    "three": "^0.164.1",
+    "@react-three/fiber": "^8.16.6",
+    "@react-three/drei": "^9.105.6",
+    "framer-motion": "^11.2.10",
+    "pixi.js": "^8.1.5"
   }
 }

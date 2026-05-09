@@ -1,0 +1,7 @@
+{
+  "name": "Maze Runner",
+  "cinematic": true,
+  "proceduralMaze": true,
+  "aiEnemies": true,
+  "gameplay": true
+}

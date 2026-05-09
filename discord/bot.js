@@ -1,5 +1,26 @@
 
-export async function startBot(){
+console.log(
+  "AI Builder Discord Runtime Online"
+)
 
-  console.log("AI Discord Bot Online")
+async function handlePrompt(
+  prompt
+){
+
+  console.log(
+    "PROCESSING:",
+    prompt
+  )
+
+  return {
+
+    success:true,
+
+    url:
+    "https://generated.pages.dev"
+  }
+}
+
+module.exports = {
+  handlePrompt
 }

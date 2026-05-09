@@ -7,17 +7,26 @@
 
 html,
 body{
+
   background:#050816;
+
   color:white;
-  overflow-x:hidden;
+
   font-family:Arial;
+
+  overflow-x:hidden;
 }
 
 body{
+
   min-height:100vh;
 
   background:
-  radial-gradient(circle at top,#111827,#050816);
+  radial-gradient(
+    circle at top,
+    #111827,
+    #050816
+  );
 }
 
 button{
@@ -26,21 +35,4 @@ button{
 
 textarea{
   outline:none;
-}
-
-.glass{
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(10px);
-}
-
-.glitch{
-  position:relative;
-}
-
-.glitch::before{
-  content:attr(data-text);
-  position:absolute;
-  left:2px;
-  text-shadow:-2px 0 red;
-  opacity:0.4;
 }

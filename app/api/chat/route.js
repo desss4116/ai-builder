@@ -1,11 +1,16 @@
 
 export async function POST(req){
 
-  const body = await req.json()
+  const body =
+  await req.json()
 
   return Response.json({
+
     success:true,
-    reply:"AI response generated",
+
+    reply:
+    "AI Builder Runtime Online",
+
     input:body
   })
 }

@@ -1,46 +1,79 @@
 
-import {v4 as uuid} from "uuid"
+import {v4 as uuid}
+from "uuid"
 
 import {
-  generateProjectFiles
+  analyzePrompt
+}
+from "../../../engine/reasoning/analyzer"
+
+import {
+  generateFiles
 }
 from "../../../engine/files/generator"
 
 import {
   deployProject
 }
-from "../../../engine/deploy/deployer"
+from "../../../engine/deployment/deployer"
+
+import {
+  createProject
+}
+from "../../../engine/projects/projectEngine"
 
 export async function POST(req){
 
-  const body =
-  await req.json()
+  try{
 
-  const prompt =
-  body.prompt
+    const body =
+    await req.json()
 
-  const projectName =
-  "project-" +
-  uuid()
+    const prompt =
+    body.prompt
 
-  await generateProjectFiles(
-    projectName,
-    prompt
-  )
+    const analysis =
+    analyzePrompt(prompt)
 
-  const deploy =
-  await deployProject(
-    projectName
-  )
+    const projectName =
 
-  return Response.json({
+    "project-" +
+    uuid()
 
-    success:true,
+    await createProject(
+      projectName
+    )
 
-    project:projectName,
+    await generateFiles(
+      projectName,
+      prompt
+    )
 
-    url:deploy.url,
+    const deployment =
+    await deployProject(
+      projectName
+    )
 
-    prompt
-  })
+    return Response.json({
+
+      success:true,
+
+      projectName,
+
+      analysis,
+
+      deployment,
+
+      prompt
+    })
+
+  }catch(error){
+
+    return Response.json({
+
+      success:false,
+
+      error:error.message
+    })
+  }
 }

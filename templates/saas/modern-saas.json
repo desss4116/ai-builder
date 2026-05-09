@@ -1,0 +1,6 @@
+{
+  "name": "Modern SaaS",
+  "dashboard": true,
+  "auth": true,
+  "analytics": true
+}
