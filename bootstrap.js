@@ -20,9 +20,7 @@ folders.forEach(folder => {
   }
 })
 
-fs.writeFileSync(
-  "app/page.js",
-`
+const page = `
 export default function Home() {
   return (
     <main style={{
@@ -49,17 +47,16 @@ export default function Home() {
   )
 }
 `
-)
 
-fs.writeFileSync(
-  "package.json",
-`
+fs.writeFileSync("app/page.js", page)
+
+const packageJson = `
 {
   "name": "ai-builder",
   "private": true,
   "scripts": {
-    "build": "next build",
-    "dev": "next dev"
+    "dev": "next dev",
+    "build": "next build"
   },
   "dependencies": {
     "next": "14.2.35",
@@ -68,6 +65,7 @@ fs.writeFileSync(
   }
 }
 `
-)
+
+fs.writeFileSync("package.json", packageJson)
 
 console.log("AI Builder Generated")
