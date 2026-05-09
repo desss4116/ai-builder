@@ -34,30 +34,7 @@ func main() {
 			return
 		}
 
-		s.ChannelMessageSend(
-			m.ChannelID,
-			"🧠 Анализирую запрос...",
-		)
-
-		results :=
-			internet.Search(
-				m.Content,
-			)
-
-		answer :=
-			brain.Synthesize(
-				m.Content,
-				results,
-			)
-
-		msg :=
-			"🌐 Ответ:\n\n" +
-				answer
-
-		s.ChannelMessageSend(
-			m.ChannelID,
-			msg,
-		)
+		go handleMessage(s, m)
 	})
 
 	err = dg.Open()
@@ -71,4 +48,53 @@ func main() {
 	)
 
 	select {}
+}
+
+func handleMessage(
+	s *discordgo.Session,
+	m *discordgo.MessageCreate,
+) {
+
+	s.ChannelMessageSend(
+		m.ChannelID,
+		"🧠 Анализирую запрос...",
+	)
+
+	results :=
+		internet.Search(
+			m.Content,
+		)
+
+	if len(results) == 0 {
+
+		s.ChannelMessageSend(
+			m.ChannelID,
+			"❌ Ничего не найдено.",
+		)
+
+		return
+	}
+
+	answer :=
+		brain.Synthesize(
+			m.Content,
+			results,
+		)
+
+	if answer == "" {
+		answer = "❌ Не удалось сформировать ответ."
+	}
+
+	msg :=
+		"🌐 Ответ:\n\n" +
+			answer
+
+	if len(msg) > 1900 {
+		msg = msg[:1900]
+	}
+
+	s.ChannelMessageSend(
+		m.ChannelID,
+		msg,
+	)
 }
