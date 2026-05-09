@@ -1,0 +1,31 @@
+name: AI Builder Bootstrap
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Bootstrap
+        run: node bootstrap.js
+
+      - name: Commit Generated Files
+        run: |
+          git config --global user.name "AI Builder"
+          git config --global user.email "bot@ai-builder.dev"
+
+          git add .
+
+          git commit -m "AI Builder Generated Structure" || echo "Nothing to commit"
+
+          git push
