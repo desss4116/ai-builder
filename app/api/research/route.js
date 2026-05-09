@@ -5,7 +5,7 @@ export async function POST(req){
 
   return Response.json({
     success:true,
-    prompt:body.prompt || null,
-    message:"AI Builder Generator Online"
+    query:body.query || null,
+    results:[]
   })
 }

@@ -1,15 +1,20 @@
 
-import Navbar from "../components/Navbar"
-import Hero from "../components/Hero"
+"use client"
 
-export default function Home() {
+import Hero from "../components/Hero"
+import PromptBox from "../components/PromptBox"
+import Preview from "../components/Preview"
+
+export default function Home(){
 
   return (
     <main>
 
-      <Navbar />
-
       <Hero />
+
+      <PromptBox />
+
+      <Preview />
 
     </main>
   )

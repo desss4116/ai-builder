@@ -6,7 +6,7 @@ export const metadata = {
   description:"Autonomous Website Intelligence System"
 }
 
-export default function RootLayout({ children }) {
+export default function RootLayout({children}){
 
   return (
     <html lang="en">

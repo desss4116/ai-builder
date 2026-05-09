@@ -1,22 +1,17 @@
 
-export default function Hero() {
+export default function Hero(){
 
   return (
     <section
       style={{
-        minHeight:"90vh",
-        display:"flex",
-        justifyContent:"center",
-        alignItems:"center",
-        flexDirection:"column",
-        textAlign:"center",
-        padding:"20px"
+        padding:"100px 20px",
+        textAlign:"center"
       }}
     >
 
       <h1
         style={{
-          fontSize:"70px",
+          fontSize:"72px",
           marginBottom:"20px"
         }}
       >
@@ -26,8 +21,7 @@ export default function Hero() {
       <p
         style={{
           opacity:0.7,
-          maxWidth:"700px",
-          lineHeight:"1.6"
+          fontSize:"22px"
         }}
       >
         Autonomous Website Intelligence System
