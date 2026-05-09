@@ -1,16 +1,12 @@
 
+import {reason}
+from "../../../engine/ai/reasoner"
+
 export async function POST(req){
 
-  const body =
-  await req.json()
+  const body = await req.json()
 
-  return Response.json({
+  const result = await reason(body.message)
 
-    success:true,
-
-    reply:
-    "AI Builder Runtime Online",
-
-    input:body
-  })
+  return Response.json(result)
 }

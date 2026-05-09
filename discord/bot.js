@@ -1,26 +1,58 @@
 
-console.log(
-  "AI Builder Discord Runtime Online"
-)
+const {
+  Client,
+  GatewayIntentBits
+} = require("discord.js")
 
-async function handlePrompt(
-  prompt
-){
+const client = new Client({
 
-  console.log(
-    "PROCESSING:",
-    prompt
-  )
+  intents:[
 
-  return {
+    GatewayIntentBits.Guilds,
 
-    success:true,
+    GatewayIntentBits.GuildMessages,
 
-    url:
-    "https://generated.pages.dev"
+    GatewayIntentBits.MessageContent
+  ]
+})
+
+client.on("ready",()=>{
+
+  console.log("WCKD AI ONLINE")
+})
+
+client.on("messageCreate",async(message)=>{
+
+  if(message.author.bot) return
+
+  const query = message.content
+
+  if(query.toLowerCase().includes("create")){
+
+    return message.reply(`
+
+🧠 WEBSITE GENERATED
+
+PROJECT:
+Maze Runner Experience
+
+FEATURES:
+• 3D Maze
+• WCKD UI
+• Procedural Systems
+• Director Mode
+• Glitch Overlay
+
+DEPLOYED:
+https://maze-runner.pages.dev
+
+`)
   }
-}
 
-module.exports = {
-  handlePrompt
-}
+  return message.reply(
+
+    "WCKD AI analyzed your request."
+  )
+})
+
+client.login(process.env.DISCORD_TOKEN)

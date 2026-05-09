@@ -1,27 +1,44 @@
 
-import {create}
-from "zustand"
+"use client"
 
-const useGameStore =
+import {create} from "zustand"
 
-create((set)=>({
+const useGameStore = create((set)=>({
 
-  health:100,
+  energy:100,
 
-  stamina:100,
+  level:1,
 
-  inventory:[],
+  mode:"DIRECTOR",
 
-  setHealth:(health)=>
-    set({
-      health
-    }),
+  glitch:false,
 
-  setStamina:(stamina)=>
-    set({
-      stamina
-    })
+  discoveredSecrets:[],
 
+  setEnergy:(energy)=>set({energy}),
+
+  setLevel:(level)=>set({level}),
+
+  setMode:(mode)=>set({mode}),
+
+  triggerGlitch:()=>{
+
+    set({glitch:true})
+
+    setTimeout(()=>{
+
+      set({glitch:false})
+
+    },500)
+  },
+
+  unlockSecret:(secret)=>set(state=>({
+
+    discoveredSecrets:[
+      ...state.discoveredSecrets,
+      secret
+    ]
+  }))
 }))
 
 export default useGameStore

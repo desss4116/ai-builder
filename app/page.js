@@ -1,26 +1,32 @@
 
 "use client"
 
-import Hero
-from "../components/Hero"
+import dynamic from "next/dynamic"
 
-import PromptBox
-from "../components/PromptBox"
+import TerminalOverlay
+from "../components/wckd/TerminalOverlay"
 
-import Preview
-from "../components/live-preview/Preview"
+const MazeScene = dynamic(
+
+  ()=>import("../components/three/MazeScene"),
+
+  {ssr:false}
+)
 
 export default function Home(){
 
   return (
 
-    <main>
+    <main
+      style={{
+        width:"100vw",
+        height:"100vh"
+      }}
+    >
 
-      <Hero />
+      <MazeScene />
 
-      <PromptBox />
-
-      <Preview />
+      <TerminalOverlay />
 
     </main>
   )

@@ -1,19 +1,15 @@
 
-# AI Builder Omega Ultra
+# WCKD OS TERMINAL GENESIS
 
-Production Ready AI Website + Game Factory
+AAA CINEMATIC MAZE RUNNER EXPERIENCE
 
-Features:
+FEATURES:
 
-- Next.js 14
-- Three.js
-- PixiJS
-- Framer Motion
-- Runtime Generation
-- Procedural Worlds
-- AI Enemy Systems
-- Cinematic Rendering
-- Cloudflare Deploy
-- Railway Deploy
-- GitHub Push
-- AI Runtime
+- THREE.JS
+- R3F
+- WCKD UI
+- GLITCH FX
+- ZUSTAND
+- FRAMER MOTION
+- AI ENGINE
+- DISCORD BOT

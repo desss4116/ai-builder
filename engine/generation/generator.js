@@ -1,27 +1,26 @@
 
-export async function generateWebsite(
-  prompt
-){
+export async function generateProject(prompt){
 
   return {
 
     success:true,
 
-    architecture:{
-      frontend:"Next.js 14",
-      styling:"Tailwind CSS",
-      animation:"Framer Motion",
-      gameEngine:"Three.js + PixiJS",
-      state:"Zustand"
-    },
+    project:"maze-runner",
+
+    deployment:
+      "https://maze-runner.pages.dev",
 
     features:[
-      "3D Cinematic Landing",
-      "Procedural Maze",
-      "Infinite Runner",
-      "Dynamic UI",
-      "AI Systems",
-      "Glitch Effects"
+
+      "Three.js Maze",
+
+      "WCKD UI",
+
+      "Glitch Effects",
+
+      "AI Runtime",
+
+      "Director Mode"
     ]
   }
 }

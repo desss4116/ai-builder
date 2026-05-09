@@ -3,15 +3,12 @@ import "./globals.css"
 
 export const metadata = {
 
-  title:"AI Builder Omega Ultra",
+  title:"WCKD OS",
 
-  description:
-  "Autonomous Website + Game AI Factory"
+  description:"Maze Runner Experience"
 }
 
-export default function RootLayout({
-  children
-}){
+export default function RootLayout({children}){
 
   return (
 
